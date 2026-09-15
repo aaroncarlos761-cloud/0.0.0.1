@@ -15,7 +15,7 @@ cargues tardíos: un contrato firmado en mayo que la entidad sube a SECOP en sep
 aparece como novedad, porque la comparación es por identificador de contrato y no por
 fecha.
 
-**Banderas rojas.** Dieciocho reglas de detección aplicadas a cada contrato y a cada proceso,
+**Banderas rojas.** Diecinueve reglas de detección aplicadas a cada contrato y a cada proceso,
 con severidad crítica, alta o media. Se explican una por una más abajo y en la pestaña de
 Metodología del propio sitio, con la fuente de cada una. Se puede filtrar por regla y exportar
 lo marcado a CSV con la explicación incluida.
@@ -51,7 +51,7 @@ fila.
 
 ## Banderas rojas
 
-El monitor evalúa dieciocho reglas de detección sobre cada contrato y cada proceso, y marca los
+El monitor evalúa diecinueve reglas de detección sobre cada contrato y cada proceso, y marca los
 registros que merecen que alguien abra el expediente. Una bandera es un indicio, nunca una prueba.
 
 Las tipologías de corrupción vienen del documento «Tipologías de corrupción en Colombia, Tomo III»

@@ -396,11 +396,20 @@ const REGLAS = [
     id: "sin-contratista", ambito: "contrato", sev: 3,
     nombre: "Contratista sin identificar",
     corto: "Sin contratista",
-    que: "El contratista figura como «Sin Descripción» o su documento como «No definido».",
-    porque: "Sin identificación no se puede verificar idoneidad, inhabilidades ni concentración. Un contrato así es invisible al control ciudadano.",
+    que: "El contratista figura literalmente como «Sin Descripción»: el registro no dice quién es.",
+    porque: "Sin nombre no se puede verificar idoneidad, inhabilidades ni concentración. Un contrato así es invisible al control ciudadano.",
     fuente: "Open Contracting R045 · Transparencia por Colombia",
-    test: c => /sin descripcion/i.test(c.proveedor_adjudicado || "") ||
-               (c.documento_proveedor || "").toLowerCase() === "no definido" || !c.documento_proveedor
+    test: c => /sin descripcion/i.test(c.proveedor_adjudicado || "")
+  },
+  {
+    id: "sin-documento", ambito: "contrato", sev: 2,
+    nombre: "Contratista sin documento registrado",
+    corto: "Sin documento",
+    que: "El contratista tiene nombre pero su documento aparece como «No definido».",
+    porque: "Sin documento no se puede cruzar con otros contratos ni con el registro mercantil, así que el contratista no se puede rastrear. Es frecuente en consorcios y uniones temporales, y ahí precisamente es donde más falta hace saber quién los compone.",
+    fuente: "Open Contracting R045",
+    test: c => !/sin descripcion/i.test(c.proveedor_adjudicado || "") &&
+               ((c.documento_proveedor || "").toLowerCase() === "no definido" || !c.documento_proveedor)
   },
   {
     id: "fraccionamiento", ambito: "contrato", sev: 2,
