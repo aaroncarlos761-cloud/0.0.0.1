@@ -15,12 +15,17 @@ cargues tardíos: un contrato firmado en mayo que la entidad sube a SECOP en sep
 aparece como novedad, porque la comparación es por identificador de contrato y no por
 fecha.
 
-**Señales.** Tres cosas a la vez. Valores imposibles, que son los contratos por encima de
-cien mil millones de pesos y que en esta entidad solo pueden ser errores de digitación al
-cargar a SECOP. Atípicos, que son los que superan veinte veces el promedio de su propio
-tipo de contrato, calculado excluyendo los imposibles para que no contaminen el promedio.
-Y el reparto por modalidad, con el porcentaje que se adjudica por contratación directa.
-Abajo, los contratos en ejecución que vencen dentro de 30, 60 o 90 días.
+**Banderas rojas.** Dieciocho reglas de detección aplicadas a cada contrato y a cada proceso,
+con severidad crítica, alta o media. Se explican una por una más abajo y en la pestaña de
+Metodología del propio sitio, con la fuente de cada una. Se puede filtrar por regla y exportar
+lo marcado a CSV con la explicación incluida.
+
+**Vencimientos y modalidades.** Los contratos en ejecución que terminan dentro de 30, 60 o 90
+días, útil para pedir informes de supervisión a tiempo, y el reparto por modalidad de
+contratación del periodo.
+
+**Metodología.** Qué detecta cada regla, por qué importa, de dónde sale y qué no puede ver este
+monitor. Está dentro del sitio para que cualquiera pueda auditar el criterio.
 
 **Contratos.** La tabla completa con filtros por sede, fechas, modalidad, tipo y texto
 libre sobre el objeto o el contratista.
@@ -43,6 +48,60 @@ contratos de una misma persona, así que el análisis no pierde precisión. Los 
 empresas y entidades se muestran completos porque no son dato personal. Quien necesite
 verificar un documento lo encuentra en el expediente oficial de SECOP, enlazado en cada
 fila.
+
+## Banderas rojas
+
+El monitor evalúa dieciocho reglas de detección sobre cada contrato y cada proceso, y marca los
+registros que merecen que alguien abra el expediente. Una bandera es un indicio, nunca una prueba.
+
+Las tipologías de corrupción vienen del documento «Tipologías de corrupción en Colombia, Tomo III»
+de la Fiscalía General de la Nación: fraccionamiento, objeto acomodado, direccionamiento, colusión,
+alteración de modalidades, apropiación del anticipo, supervisor desleal y adiciones irregulares.
+
+Los criterios de cálculo vienen de la guía «Red flags in public procurement» de la Open Contracting
+Partnership, edición de 2024, que cataloga setenta y tres banderas rojas para datos de contratación.
+De ese catálogo se implementaron las que se pueden calcular con los campos que SECOP II publica.
+
+Los umbrales numéricos se calibraron contra los datos reales de la ESAP para que cada regla marque
+lo excepcional y no lo cotidiano. Por ejemplo: el 16 % de los contratos de la entidad figura como
+«modificado», así que esa condición sola no sirve de alarma; en cambio solo el 1,1 % tiene más de
+noventa días de prórroga, y ese sí es un umbral que separa.
+
+### Reglas sobre contratos
+
+| Severidad | Regla | Qué detecta |
+|---|---|---|
+| Crítica | Valor imposible | Contrato por más de cien mil millones de pesos |
+| Crítica | Se pagó más de lo contratado | Valor pagado superior al valor del contrato |
+| Crítica | Empezó antes de firmarse | Fecha de inicio anterior a la fecha de firma |
+| Crítica | Contratista sin identificar | Contratista «Sin Descripción» o documento «No definido» |
+| Alta | Posible fraccionamiento | Dos o más contratos al mismo contratista, misma entidad, mismo día |
+| Alta | Valor atípico para su tipo | Más de veinte veces el promedio de su tipo de contrato |
+| Alta | Contratista recurrente | Cinco o más contratos en el periodo consultado |
+| Alta | Prórroga extensa | Más de noventa días adicionados al plazo |
+| Alta | Contrato con anticipo | Cualquier pago adelantado, que en la ESAP es rarísimo |
+| Alta | Contrato cedido | El que firmó no fue el que ejecutó |
+| Media | Publicado sin valor | Contrato con valor cero |
+| Media | Sin fecha de firma | Registro no atribuible a ninguna administración |
+| Media | Sin supervisor designado | Campo de supervisor vacío o «No definido» |
+
+### Reglas sobre procesos
+
+| Severidad | Regla | Qué detecta |
+|---|---|---|
+| Crítica | Adjudicado sin ofertas | Se adjudicó sin ninguna oferta registrada |
+| Alta | Un solo oferente | Se adjudicó con una sola oferta recibida |
+| Alta | Plazo corto para ofertar | Menos de cinco días entre publicación y cierre |
+| Media | Adjudicado casi por el precio base | Valor adjudicado por encima del 99 % del base |
+| Media | Muchos invitados, casi ninguna oferta | Veinte o más invitados y dos o menos respuestas |
+
+### Lo que no se puede detectar con estos datos
+
+SECOP II no publica las ofertas perdedoras, así que las señales de colusión que exigen compararlas
+—precios idénticos, múltiplos fijos, rotación de ganadores— no se pueden calcular. Tampoco publica
+los beneficiarios finales de las empresas, así que no se puede detectar que dos oferentes compartan
+dueño. Y el objeto acomodado solo se detecta leyendo los pliegos: el monitor puede decir a qué
+proceso mirar, no leerlo por nadie.
 
 ## Publicar en GitHub Pages
 

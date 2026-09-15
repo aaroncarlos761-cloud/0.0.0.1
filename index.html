@@ -4,204 +4,139 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Monitor de Contratación ESAP — SECOP II</title>
-<meta name="description" content="Monitor de la contratación pública de la ESAP a partir de los datos abiertos de SECOP II. Se actualiza en cada consulta.">
+<meta name="description" content="Monitor de la contratación pública de la ESAP sobre los datos abiertos de SECOP II, con detección de banderas rojas. Se actualiza en cada consulta.">
 <style>
 :root{
   color-scheme: light;
-  --surface-1:#fcfcfb;
-  --plane:#f9f9f7;
-  --ink:#0b0b0b;
-  --ink-2:#52514e;
-  --ink-muted:#898781;
-  --grid:#e1e0d9;
-  --axis:#c3c2b7;
-  --ring:rgba(11,11,11,0.10);
-  --series-1:#2a78d6;
-  --good:#0ca30c;
-  --warning:#fab219;
-  --serious:#ec835a;
-  --critical:#d03b3b;
-  --accent-soft:#cde2fb;
+  --surface-1:#fcfcfb; --plane:#f9f9f7; --ink:#0b0b0b; --ink-2:#52514e; --ink-muted:#898781;
+  --grid:#e1e0d9; --axis:#c3c2b7; --ring:rgba(11,11,11,0.10);
+  --series-1:#2a78d6; --good:#0ca30c; --warning:#fab219; --serious:#ec835a; --critical:#d03b3b;
+  --accent-soft:#cde2fb; --crit-soft:#fbe3e3; --alta-soft:#fdeae0; --media-soft:#fdf3d9;
 }
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    color-scheme: dark;
-    --surface-1:#1a1a19;
-    --plane:#0d0d0d;
-    --ink:#ffffff;
-    --ink-2:#c3c2b7;
-    --ink-muted:#898781;
-    --grid:#2c2c2a;
-    --axis:#383835;
-    --ring:rgba(255,255,255,0.10);
-    --series-1:#3987e5;
-    --accent-soft:#184f95;
-  }
-}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  color-scheme: dark;
+  --surface-1:#1a1a19; --plane:#0d0d0d; --ink:#ffffff; --ink-2:#c3c2b7; --ink-muted:#898781;
+  --grid:#2c2c2a; --axis:#383835; --ring:rgba(255,255,255,0.10);
+  --series-1:#3987e5; --accent-soft:#184f95; --crit-soft:#3d1c1c; --alta-soft:#3a2418; --media-soft:#332a14;
+}}
 :root[data-theme="dark"]{
   color-scheme: dark;
-  --surface-1:#1a1a19;
-  --plane:#0d0d0d;
-  --ink:#ffffff;
-  --ink-2:#c3c2b7;
-  --ink-muted:#898781;
-  --grid:#2c2c2a;
-  --axis:#383835;
-  --ring:rgba(255,255,255,0.10);
-  --series-1:#3987e5;
-  --accent-soft:#184f95;
+  --surface-1:#1a1a19; --plane:#0d0d0d; --ink:#ffffff; --ink-2:#c3c2b7; --ink-muted:#898781;
+  --grid:#2c2c2a; --axis:#383835; --ring:rgba(255,255,255,0.10);
+  --series-1:#3987e5; --accent-soft:#184f95; --crit-soft:#3d1c1c; --alta-soft:#3a2418; --media-soft:#332a14;
 }
 
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
-body{
-  background:var(--plane);
-  color:var(--ink);
-  font:14px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;
-  -webkit-text-size-adjust:100%;
-}
+body{background:var(--plane);color:var(--ink);font:14px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-text-size-adjust:100%}
 a{color:var(--series-1)}
-.wrap{max-width:1280px;margin:0 auto;padding-inline:20px;padding-block:0 64px}
+.wrap{max-width:1320px;margin:0 auto;padding-inline:20px;padding-block:0 72px}
 
-/* ---------- encabezado ---------- */
-header.top{
-  border-bottom:1px solid var(--ring);
-  background:var(--surface-1);
-  position:sticky;top:0;z-index:30;
-}
-.top-in{max-width:1280px;margin:0 auto;padding:14px 20px;display:flex;gap:16px;align-items:baseline;flex-wrap:wrap}
+header.top{border-bottom:1px solid var(--ring);background:var(--surface-1);position:sticky;top:0;z-index:30}
+.top-in{max-width:1320px;margin:0 auto;padding:14px 20px;display:flex;gap:16px;align-items:baseline;flex-wrap:wrap}
 .brand{font-size:16px;font-weight:650;letter-spacing:-0.01em;margin:0}
 .brand span{color:var(--ink-muted);font-weight:400}
-.top-meta{margin-left:auto;color:var(--ink-muted);font-size:12px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
-.btn-ghost{
-  background:transparent;border:1px solid var(--ring);color:var(--ink-2);
-  border-radius:7px;padding:5px 10px;font:inherit;font-size:12px;cursor:pointer;
-}
+.top-meta{margin-left:auto;color:var(--ink-muted);font-size:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.btn-ghost{background:transparent;border:1px solid var(--ring);color:var(--ink-2);border-radius:7px;padding:5px 10px;font:inherit;font-size:12px;cursor:pointer}
 .btn-ghost:hover{background:var(--plane)}
+.btn-ghost[disabled]{opacity:.45;cursor:default}
 
-/* ---------- filtros ---------- */
-.filters{
-  background:var(--surface-1);border:1px solid var(--ring);border-radius:12px;
-  padding:14px;margin-top:18px;
-  display:grid;gap:12px;
-  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
-  align-items:end;
-}
+.filters{background:var(--surface-1);border:1px solid var(--ring);border-radius:12px;padding:14px;margin-top:18px;
+  display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));align-items:end}
 .f label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-muted);margin-bottom:5px}
-.f select,.f input{
-  width:100%;background:var(--plane);color:var(--ink);
-  border:1px solid var(--ring);border-radius:8px;padding:7px 9px;font:inherit;font-size:13px;
-}
+.f select,.f input{width:100%;background:var(--plane);color:var(--ink);border:1px solid var(--ring);border-radius:8px;padding:7px 9px;font:inherit;font-size:13px}
 .f-actions{display:flex;gap:8px;flex-wrap:wrap}
-.btn{
-  background:var(--series-1);color:#fff;border:0;border-radius:8px;
-  padding:8px 14px;font:inherit;font-weight:550;cursor:pointer;
-}
+.btn{background:var(--series-1);color:#fff;border:0;border-radius:8px;padding:8px 14px;font:inherit;font-weight:550;cursor:pointer}
 .btn:hover{filter:brightness(1.08)}
 .btn[disabled]{opacity:.5;cursor:default}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px;max-height:104px;overflow:auto;padding:2px}
-.chip{
-  border:1px solid var(--ring);background:var(--plane);color:var(--ink-2);
-  border-radius:999px;padding:3px 9px;font-size:12px;cursor:pointer;user-select:none;
-}
+.chip{border:1px solid var(--ring);background:var(--plane);color:var(--ink-2);border-radius:999px;padding:3px 9px;font-size:12px;cursor:pointer;user-select:none}
 .chip[aria-pressed="true"]{background:var(--series-1);border-color:var(--series-1);color:#fff}
 
-/* ---------- pestañas ---------- */
 nav.tabs{display:flex;gap:2px;margin:22px 0 0;border-bottom:1px solid var(--ring);overflow-x:auto}
-nav.tabs button{
-  background:none;border:0;border-bottom:2px solid transparent;
-  color:var(--ink-2);font:inherit;font-size:13.5px;padding:9px 13px;cursor:pointer;white-space:nowrap;
-}
+nav.tabs button{background:none;border:0;border-bottom:2px solid transparent;color:var(--ink-2);font:inherit;font-size:13.5px;padding:9px 13px;cursor:pointer;white-space:nowrap}
 nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--series-1);font-weight:600}
-nav.tabs button .cnt{
-  display:inline-block;margin-left:6px;background:var(--accent-soft);color:var(--ink);
-  border-radius:999px;padding:0 6px;font-size:11px;font-weight:600;
-}
+nav.tabs button .cnt{display:inline-block;margin-left:6px;background:var(--accent-soft);color:var(--ink);border-radius:999px;padding:0 6px;font-size:11px;font-weight:600}
 nav.tabs button .cnt.hot{background:var(--critical);color:#fff}
 
-/* ---------- tarjetas ---------- */
 .panel{display:none;padding-top:20px}
 .panel.on{display:block}
-.card{
-  background:var(--surface-1);border:1px solid var(--ring);border-radius:12px;
-  padding:16px;margin-bottom:16px;
-}
+.card{background:var(--surface-1);border:1px solid var(--ring);border-radius:12px;padding:16px;margin-bottom:16px}
 .card h2{margin:0 0 4px;font-size:15px;font-weight:650;letter-spacing:-0.01em}
+.card h3{margin:18px 0 6px;font-size:13.5px;font-weight:650}
 .card p.sub{margin:0 0 14px;color:var(--ink-muted);font-size:12.5px}
 
 .tiles{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));margin-bottom:16px}
 .tile{background:var(--surface-1);border:1px solid var(--ring);border-radius:12px;padding:14px 15px}
+.tile.crit{background:var(--crit-soft);border-color:var(--critical)}
+.tile.alta{background:var(--alta-soft)}
+.tile.media{background:var(--media-soft)}
 .tile .k{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-muted)}
 .tile .v{font-size:25px;font-weight:640;letter-spacing:-0.02em;margin-top:3px;line-height:1.15}
 .tile .n{font-size:12px;color:var(--ink-2);margin-top:3px}
 .meter{height:6px;background:var(--grid);border-radius:999px;margin-top:9px;overflow:hidden}
 .meter i{display:block;height:100%;background:var(--series-1);border-radius:999px}
 
-/* ---------- tablas ---------- */
 .tw{overflow-x:auto;border:1px solid var(--ring);border-radius:10px;background:var(--surface-1)}
 table{border-collapse:collapse;width:100%;font-size:13px}
 th,td{padding:8px 11px;text-align:left;border-bottom:1px solid var(--grid);vertical-align:top}
-th{
-  font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-muted);
-  font-weight:600;white-space:nowrap;position:sticky;top:0;background:var(--surface-1);z-index:2;
-}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-muted);font-weight:600;white-space:nowrap;position:sticky;top:0;background:var(--surface-1);z-index:2}
+th[data-sort]{cursor:pointer;user-select:none}
+th[data-sort]:hover{color:var(--ink)}
+th .ar{opacity:.5;font-size:9px;margin-left:3px}
 tbody tr:last-child td{border-bottom:0}
 tbody tr:hover{background:var(--plane)}
 td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-td.obj{max-width:420px;color:var(--ink-2)}
+td.obj{max-width:400px;color:var(--ink-2)}
 td.obj .o{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .mono{font-variant-numeric:tabular-nums}
 .linkish{background:none;border:0;color:var(--series-1);padding:0;font:inherit;cursor:pointer;text-align:left}
 .linkish:hover{text-decoration:underline}
 
-/* ---------- señales ---------- */
 .flag{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;white-space:nowrap}
 .flag::before{font-size:12px;line-height:1}
 .flag.crit{color:var(--critical)} .flag.crit::before{content:"\25C6"}
-.flag.warn{color:var(--ink-2)} .flag.warn::before{content:"\25B2";color:var(--warning)}
-.flag.ser{color:var(--ink-2)} .flag.ser::before{content:"\25CF";color:var(--serious)}
+.flag.alta{color:var(--ink-2)} .flag.alta::before{content:"\25B2";color:var(--serious)}
+.flag.media{color:var(--ink-2)} .flag.media::before{content:"\25CF";color:var(--warning)}
 .flag.ok{color:var(--ink-2)} .flag.ok::before{content:"\2713";color:var(--good)}
+.tags{display:flex;flex-wrap:wrap;gap:4px}
+.tag{font-size:10.5px;font-weight:600;border-radius:4px;padding:1px 6px;white-space:nowrap;border:1px solid transparent}
+.tag.crit{background:var(--crit-soft);color:var(--critical);border-color:var(--critical)}
+.tag.alta{background:var(--alta-soft);color:var(--ink)}
+.tag.media{background:var(--media-soft);color:var(--ink)}
 
 .star{background:none;border:0;cursor:pointer;font-size:15px;line-height:1;color:var(--ink-muted);padding:2px 4px}
 .star[aria-pressed="true"]{color:var(--warning)}
 
-.note{
-  border-left:3px solid var(--warning);background:var(--plane);
-  padding:10px 13px;border-radius:0 8px 8px 0;font-size:12.5px;color:var(--ink-2);margin-bottom:14px;
-}
+.note{border-left:3px solid var(--warning);background:var(--plane);padding:10px 13px;border-radius:0 8px 8px 0;font-size:12.5px;color:var(--ink-2);margin-bottom:14px}
+.note.err{border-left-color:var(--critical);color:var(--ink)}
+.note.info{border-left-color:var(--series-1)}
 .empty{padding:26px 14px;text-align:center;color:var(--ink-muted);font-size:13px}
-.err{border-left-color:var(--critical);color:var(--ink)}
 .loading{color:var(--ink-muted);font-size:12.5px}
 .spin{display:inline-block;width:11px;height:11px;border:2px solid var(--grid);border-top-color:var(--series-1);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-1px;margin-right:6px}
 @keyframes sp{to{transform:rotate(360deg)}}
 
-/* ---------- gráfico ---------- */
+.regla{border:1px solid var(--ring);border-radius:10px;padding:12px 14px;margin-bottom:10px;background:var(--surface-1)}
+.regla h4{margin:0 0 2px;font-size:13.5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.regla .meta{font-size:11.5px;color:var(--ink-muted);margin-bottom:6px}
+.regla p{margin:0 0 6px;font-size:12.8px;color:var(--ink-2);line-height:1.5}
+.regla .n{margin-left:auto;font-variant-numeric:tabular-nums;font-size:12px;color:var(--ink-muted)}
+
 .chart{width:100%;height:190px;display:block}
 .chart rect.bar{fill:var(--series-1)}
 .chart rect.hit{fill:transparent}
 .chart .gl{stroke:var(--grid);stroke-width:1}
 .chart .bl{stroke:var(--axis);stroke-width:1}
 .chart text{fill:var(--ink-muted);font-size:10px}
-#tip{
-  position:fixed;pointer-events:none;opacity:0;transition:opacity .1s;
-  background:var(--surface-1);border:1px solid var(--ring);border-radius:8px;
-  padding:7px 10px;font-size:12px;box-shadow:0 6px 20px rgba(0,0,0,.16);z-index:60;
-}
+#tip{position:fixed;pointer-events:none;opacity:0;transition:opacity .1s;background:var(--surface-1);border:1px solid var(--ring);border-radius:8px;padding:7px 10px;font-size:12px;box-shadow:0 6px 20px rgba(0,0,0,.16);z-index:60}
 #tip b{display:block;font-size:12.5px}
 
-/* ---------- ficha ---------- */
-#sheet{
-  position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:50;
-  display:none;align-items:flex-start;justify-content:center;padding:24px;overflow:auto;
-}
+#sheet{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:50;display:none;align-items:flex-start;justify-content:center;padding:24px;overflow:auto}
 #sheet.on{display:flex}
-.sheet-in{
-  background:var(--surface-1);border-radius:14px;max-width:760px;width:100%;
-  padding:24px 26px;border:1px solid var(--ring);
-}
+.sheet-in{background:var(--surface-1);border-radius:14px;max-width:780px;width:100%;padding:24px 26px;border:1px solid var(--ring)}
 .sheet-in h3{margin:0 0 2px;font-size:17px}
 .sheet-in .ref{color:var(--ink-muted);font-size:12.5px;margin-bottom:16px}
-dl.kv{display:grid;grid-template-columns:190px 1fr;gap:7px 16px;margin:0;font-size:13px}
+dl.kv{display:grid;grid-template-columns:200px 1fr;gap:7px 16px;margin:0;font-size:13px}
 dl.kv dt{color:var(--ink-muted);font-size:12px}
 dl.kv dd{margin:0;color:var(--ink)}
 .sheet-act{display:flex;gap:8px;margin-top:20px;flex-wrap:wrap}
@@ -229,7 +164,7 @@ footer.foot{border-top:1px solid var(--ring);margin-top:36px;padding-top:16px;co
     <div class="top-meta">
       <span id="freshness">—</span>
       <button class="btn-ghost" id="themeBtn" type="button">Tema</button>
-      <button class="btn-ghost" id="shareBtn" type="button">Copiar enlace de esta vista</button>
+      <button class="btn-ghost" id="shareBtn" type="button">Copiar enlace</button>
     </div>
   </div>
 </header>
@@ -240,17 +175,17 @@ footer.foot{border-top:1px solid var(--ring);margin-top:36px;padding-top:16px;co
     <div class="f" style="grid-column:1/-1">
       <label>Cuentas de la ESAP en SECOP <span id="entCount" style="text-transform:none;letter-spacing:0"></span></label>
       <div class="chips" id="entChips"></div>
-      <div style="margin-top:7px;display:flex;gap:8px">
+      <div style="margin-top:7px;display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn-ghost" type="button" data-ent="all">Todas</button>
         <button class="btn-ghost" type="button" data-ent="central">Solo Sede Central</button>
-        <button class="btn-ghost" type="button" data-ent="none">Ninguna</button>
+        <button class="btn-ghost" type="button" data-ent="terr">Solo territoriales</button>
       </div>
     </div>
     <div class="f"><label for="fDesde">Firmado desde</label><input type="date" id="fDesde"></div>
     <div class="f"><label for="fHasta">Firmado hasta</label><input type="date" id="fHasta"></div>
     <div class="f"><label for="fModalidad">Modalidad</label><select id="fModalidad"><option value="">Todas</option></select></div>
     <div class="f"><label for="fTipo">Tipo de contrato</label><select id="fTipo"><option value="">Todos</option></select></div>
-    <div class="f"><label for="fTexto">Buscar en objeto o contratista</label><input type="search" id="fTexto" placeholder="p. ej. capacitación, o un nombre"></div>
+    <div class="f"><label for="fTexto">Buscar en objeto, contratista o referencia</label><input type="search" id="fTexto" placeholder="p. ej. capacitación, obra, un nombre"></div>
     <div class="f f-actions">
       <button class="btn" id="applyBtn" type="button">Consultar</button>
       <button class="btn-ghost" id="resetBtn" type="button">Limpiar</button>
@@ -259,11 +194,13 @@ footer.foot{border-top:1px solid var(--ring);margin-top:36px;padding-top:16px;co
 
   <nav class="tabs" role="tablist">
     <button role="tab" data-tab="novedades" aria-selected="true">Novedades <span class="cnt" id="cNov">—</span></button>
-    <button role="tab" data-tab="senales" aria-selected="false">Señales <span class="cnt" id="cSen">—</span></button>
+    <button role="tab" data-tab="banderas" aria-selected="false">Banderas rojas <span class="cnt" id="cBan">—</span></button>
     <button role="tab" data-tab="contratos" aria-selected="false">Contratos</button>
-    <button role="tab" data-tab="contratistas" aria-selected="false">Contratistas repetidos</button>
+    <button role="tab" data-tab="contratistas" aria-selected="false">Contratistas</button>
     <button role="tab" data-tab="procesos" aria-selected="false">Procesos</button>
+    <button role="tab" data-tab="vencimientos" aria-selected="false">Vencimientos</button>
     <button role="tab" data-tab="seguimiento" aria-selected="false">Seguimiento <span class="cnt" id="cSeg">0</span></button>
+    <button role="tab" data-tab="metodologia" aria-selected="false">Metodología</button>
   </nav>
 
   <!-- ============ NOVEDADES ============ -->
@@ -272,33 +209,39 @@ footer.foot{border-top:1px solid var(--ring);margin-top:36px;padding-top:16px;co
     <div class="tiles" id="novTiles"></div>
     <div class="card">
       <h2>Contratos que no habías visto</h2>
-      <p class="sub">Se comparan los contratos firmados en los últimos <b id="ventanaDias">120</b> días contra los que ya estaban registrados en este navegador la última vez que abriste el monitor. Detecta también los cargues tardíos: un contrato firmado en mayo que la ESAP sube a SECOP en septiembre aparece aquí.</p>
+      <p class="sub">Se comparan los contratos firmados en los últimos <b id="ventanaDias">120</b> días contra los que ya estaban registrados en este navegador la última vez que abriste el monitor. Detecta también los cargues tardíos: un contrato firmado en mayo que la ESAP sube a SECOP en septiembre aparece aquí. La columna de señal muestra las banderas rojas que le salieron a cada contrato.</p>
+      <div class="f-actions" style="margin-bottom:12px"><button class="btn-ghost" id="csvNov" type="button">Descargar CSV</button></div>
       <div id="novTabla"><div class="loading"><span class="spin"></span>Consultando SECOP…</div></div>
     </div>
     <div class="card">
       <h2>Contratos firmados por mes</h2>
-      <p class="sub">Período consultado, todas las cuentas seleccionadas.</p>
+      <p class="sub">Ventana de vigilancia, todas las cuentas seleccionadas.</p>
       <div id="chartWrap"><div class="loading"><span class="spin"></span>Cargando…</div></div>
     </div>
   </section>
 
-  <!-- ============ SEÑALES ============ -->
-  <section class="panel" id="p-senales" role="tabpanel">
-    <div class="tiles" id="senTiles"></div>
+  <!-- ============ BANDERAS ROJAS ============ -->
+  <section class="panel" id="p-banderas" role="tabpanel">
+    <div class="note info">Una bandera roja es un indicio, nunca una prueba. Un contrato marcado aquí no es un contrato irregular: es un contrato que merece que alguien abra el expediente. Las reglas y sus fuentes están explicadas en la pestaña de Metodología.</div>
+    <div class="tiles" id="banTiles"></div>
     <div class="card">
-      <h2>Valores imposibles y atípicos</h2>
-      <p class="sub">Dos reglas distintas. <b>Error de digitación</b>: contratos por encima de cien mil millones de pesos, que en esta entidad no pueden ser reales. <b>Atípico</b>: contratos que superan veinte veces el valor promedio de su propio tipo de contrato en el período consultado, calculado excluyendo los imposibles para que no contaminen el promedio.</p>
-      <div id="senAtip"><div class="loading"><span class="spin"></span>Calculando…</div></div>
+      <h2>Qué se encontró, regla por regla</h2>
+      <p class="sub">Haz clic en una regla para filtrar la tabla de abajo.</p>
+      <div id="banReglas"><div class="loading"><span class="spin"></span>Evaluando reglas…</div></div>
     </div>
     <div class="card">
-      <h2>Cómo se adjudica</h2>
-      <p class="sub">Reparto por modalidad de contratación en el período consultado.</p>
-      <div id="senModal"><div class="loading"><span class="spin"></span>Calculando…</div></div>
-    </div>
-    <div class="card">
-      <h2>Contratos que vencen pronto</h2>
-      <p class="sub">En ejecución, con fecha de terminación dentro de los próximos <select id="venDias" style="background:var(--plane);color:var(--ink);border:1px solid var(--ring);border-radius:6px;padding:2px 6px;font:inherit"><option value="30">30</option><option value="60">60</option><option value="90">90</option></select> días. No depende del filtro de fechas de firma.</p>
-      <div id="senVenc"><div class="loading"><span class="spin"></span>Consultando…</div></div>
+      <h2>Registros marcados <span id="banFiltroTxt" style="font-weight:400;color:var(--ink-muted);font-size:12.5px"></span></h2>
+      <div class="f-actions" style="margin-bottom:12px">
+        <button class="btn-ghost" id="csvBan" type="button">Descargar CSV de lo marcado</button>
+        <button class="btn-ghost" id="banTodas" type="button">Ver todas las reglas</button>
+        <label style="font-size:12px;color:var(--ink-muted);display:flex;align-items:center;gap:6px">
+          Severidad mínima
+          <select id="banSev" style="background:var(--plane);color:var(--ink);border:1px solid var(--ring);border-radius:6px;padding:2px 6px;font:inherit">
+            <option value="1">Media</option><option value="2" selected>Alta</option><option value="3">Crítica</option>
+          </select>
+        </label>
+      </div>
+      <div id="banTabla"></div>
     </div>
   </section>
 
@@ -307,9 +250,9 @@ footer.foot{border-top:1px solid var(--ring);margin-top:36px;padding-top:16px;co
     <div class="tiles" id="conTiles"></div>
     <div class="card">
       <h2>Contratos <span id="conRange" style="font-weight:400;color:var(--ink-muted);font-size:12.5px"></span></h2>
-      <p class="sub">Ordenados por fecha de firma, del más reciente al más antiguo.</p>
+      <p class="sub">Ordenados por fecha de firma. Haz clic en el encabezado de una columna para reordenar.</p>
       <div class="f-actions" style="margin-bottom:12px">
-        <button class="btn-ghost" id="csvCon" type="button">Descargar CSV de lo que estoy viendo</button>
+        <button class="btn-ghost" id="csvCon" type="button">Descargar CSV</button>
         <button class="btn-ghost" id="moreCon" type="button">Cargar 500 más</button>
       </div>
       <div id="conTabla"><div class="loading"><span class="spin"></span>Consultando SECOP…</div></div>
@@ -320,7 +263,7 @@ footer.foot{border-top:1px solid var(--ring);margin-top:36px;padding-top:16px;co
   <section class="panel" id="p-contratistas" role="tabpanel">
     <div class="card">
       <h2>Quién acumula más contratos</h2>
-      <p class="sub">Agrupado por documento del contratista dentro del período y las cuentas seleccionadas. Una misma persona con contratos en varias sedes aparece una sola vez, sumada.</p>
+      <p class="sub">Agrupado por documento del contratista dentro del periodo y las cuentas seleccionadas. Una misma persona con contratos en varias sedes aparece una sola vez, sumada.</p>
       <div class="f-actions" style="margin-bottom:12px">
         <button class="btn-ghost" id="csvCtta" type="button">Descargar CSV</button>
         <label style="font-size:12px;color:var(--ink-muted);display:flex;align-items:center;gap:6px">
@@ -338,11 +281,24 @@ footer.foot{border-top:1px solid var(--ring);margin-top:36px;padding-top:16px;co
   <section class="panel" id="p-procesos" role="tabpanel">
     <div class="card">
       <h2>Procesos de contratación</h2>
-      <p class="sub">Los procesos son la etapa anterior al contrato: es donde una veeduría todavía alcanza a incidir. La columna <b>Invitados / Respuestas</b> muestra a cuántos proveedores se invitó y cuántos respondieron; un proceso con un invitado y una respuesta es la definición operativa de competencia nula.</p>
-      <div class="f-actions" style="margin-bottom:12px">
-        <button class="btn-ghost" id="csvProc" type="button">Descargar CSV</button>
-      </div>
+      <p class="sub">Los procesos son la etapa anterior al contrato: es donde una veeduría todavía alcanza a incidir. La columna de invitados frente a respuestas muestra cuánta competencia hubo realmente, y la de señal muestra las banderas que le salieron al proceso.</p>
+      <div class="f-actions" style="margin-bottom:12px"><button class="btn-ghost" id="csvProc" type="button">Descargar CSV</button></div>
       <div id="procTabla"><div class="loading"><span class="spin"></span>Consultando SECOP…</div></div>
+    </div>
+  </section>
+
+  <!-- ============ VENCIMIENTOS ============ -->
+  <section class="panel" id="p-vencimientos" role="tabpanel">
+    <div class="card">
+      <h2>Contratos que vencen pronto</h2>
+      <p class="sub">En ejecución, con fecha de terminación dentro de los próximos <select id="venDias" style="background:var(--plane);color:var(--ink);border:1px solid var(--ring);border-radius:6px;padding:2px 6px;font:inherit"><option value="30">30</option><option value="60">60</option><option value="90">90</option></select> días. Sirve para pedir informes de supervisión a tiempo. No depende del filtro de fechas de firma.</p>
+      <div class="f-actions" style="margin-bottom:12px"><button class="btn-ghost" id="csvVenc" type="button">Descargar CSV</button></div>
+      <div id="senVenc"><div class="loading"><span class="spin"></span>Consultando…</div></div>
+    </div>
+    <div class="card">
+      <h2>Cómo se adjudica</h2>
+      <p class="sub">Reparto por modalidad de contratación en el periodo consultado.</p>
+      <div id="senModal"><div class="loading"><span class="spin"></span>Calculando…</div></div>
     </div>
   </section>
 
@@ -350,7 +306,7 @@ footer.foot{border-top:1px solid var(--ring);margin-top:36px;padding-top:16px;co
   <section class="panel" id="p-seguimiento" role="tabpanel">
     <div class="card">
       <h2>Lo que estás vigilando</h2>
-      <p class="sub">Marca con la estrella cualquier contrato o contratista en las otras pestañas y queda fijado aquí. La lista vive en este navegador, en este equipo; no se sube a ningún lado.</p>
+      <p class="sub">Marca con la estrella cualquier contrato, contratista o proceso en las otras pestañas y queda fijado aquí. La lista vive en este navegador, en este equipo; no se sube a ningún lado.</p>
       <div class="f-actions" style="margin-bottom:12px">
         <button class="btn-ghost" id="csvSeg" type="button">Descargar CSV</button>
         <button class="btn-ghost" id="clearSeg" type="button">Vaciar la lista</button>
@@ -358,6 +314,22 @@ footer.foot{border-top:1px solid var(--ring);margin-top:36px;padding-top:16px;co
       <div id="segProc"></div>
       <div id="segCtta" style="margin-top:18px"></div>
       <div id="segCon" style="margin-top:18px"></div>
+    </div>
+  </section>
+
+  <!-- ============ METODOLOGÍA ============ -->
+  <section class="panel" id="p-metodologia" role="tabpanel">
+    <div class="card">
+      <h2>Cómo funcionan las banderas rojas</h2>
+      <p class="sub">Cada regla dice qué detecta, por qué importa y de dónde sale. Ninguna prueba nada por sí sola.</p>
+      <div class="note">Las tipologías de corrupción vienen del documento «Tipologías de corrupción en Colombia, Tomo III» de la Fiscalía General de la Nación. Los criterios de cálculo vienen de la guía «Red flags in public procurement» de la Open Contracting Partnership, edición de 2024, que cataloga setenta y tres banderas rojas para datos de contratación. De ese catálogo se implementaron las que se pueden calcular con los campos que SECOP II publica; las que requieren ver las ofertas perdedoras, los pliegos o la propiedad de las empresas no se pueden automatizar con estos datos y quedan por fuera.</p>
+      <div class="note">Los umbrales numéricos no son inventados ni copiados: se calibraron contra los datos reales de la ESAP para que cada regla marque lo excepcional y no lo cotidiano. Por ejemplo, el 16 % de los contratos de la entidad figura como «modificado», así que esa condición sola no sirve de alarma; en cambio solo el 1,1 % tiene más de noventa días de prórroga, y ese sí es un umbral que separa.</p>
+      <div id="metReglas"></div>
+    </div>
+    <div class="card">
+      <h2>Lo que este monitor no puede ver</h2>
+      <p class="sub">Los límites, dichos de frente.</p>
+      <div id="metLimites"></div>
     </div>
   </section>
 
@@ -369,14 +341,207 @@ footer.foot{border-top:1px solid var(--ring);margin-top:36px;padding-top:16px;co
 </div>
 
 <div id="tip" role="tooltip"></div>
-
-<div id="sheet" role="dialog" aria-modal="true" aria-label="Ficha del contrato">
-  <div class="sheet-in" id="sheetIn"></div>
-</div>
+<div id="sheet" role="dialog" aria-modal="true" aria-label="Ficha del contrato"><div class="sheet-in" id="sheetIn"></div></div>
 
 <script>
 (() => {
 "use strict";
+
+/* ============================================================
+   MOTOR DE BANDERAS ROJAS
+   ------------------------------------------------------------
+   Cada regla es un indicio, nunca una prueba. Un contrato marcado
+   no es un contrato irregular: es un contrato que merece que
+   alguien abra el expediente.
+
+   Las tipologías vienen del documento "Tipologías de corrupción en
+   Colombia, Tomo III" de la Fiscalía General de la Nación, y los
+   criterios de cálculo de la guía "Red flags in public procurement"
+   de la Open Contracting Partnership (2024). Los umbrales numéricos
+   se calibraron contra los datos reales de la ESAP para que marquen
+   lo excepcional y no lo cotidiano.
+   ============================================================ */
+
+const REGLAS = [
+  /* ---------------- contratos ---------------- */
+  {
+    id: "valor-imposible", ambito: "contrato", sev: 3,
+    nombre: "Valor imposible",
+    corto: "Valor imposible",
+    que: "El contrato está registrado por más de cien mil millones de pesos, una cifra que esta entidad no puede contratar.",
+    porque: "Es un error de digitación al cargar a SECOP. Importa porque infla los totales públicos de la entidad y porque revela que nadie valida lo que se publica.",
+    fuente: "Calidad del dato · umbral calibrado sobre la ESAP",
+    test: c => (+c.valor_del_contrato || 0) >= 100e9
+  },
+  {
+    id: "pago-excede", ambito: "contrato", sev: 3,
+    nombre: "Se pagó más de lo contratado",
+    corto: "Pago excede",
+    que: "El valor reportado como pagado supera el valor del contrato.",
+    porque: "Pagar por encima de lo pactado sin acto administrativo que lo soporte es un hallazgo fiscal directo.",
+    fuente: "Open Contracting R068",
+    test: c => { const v = +c.valor_del_contrato || 0, p = +c.valor_pagado || 0; return v > 0 && p > v * 1.001; }
+  },
+  {
+    id: "inicio-antes-firma", ambito: "contrato", sev: 3,
+    nombre: "Empezó antes de firmarse",
+    corto: "Inicio previo",
+    que: "La fecha de inicio del contrato es anterior a la fecha de firma.",
+    porque: "Ejecutar antes de perfeccionar el contrato está prohibido y es una de las irregularidades clásicas en contratación estatal.",
+    fuente: "Ley 80 de 1993, art. 41",
+    test: c => c.fecha_de_firma && c.fecha_de_inicio_del_contrato &&
+               c.fecha_de_inicio_del_contrato.slice(0,10) < c.fecha_de_firma.slice(0,10)
+  },
+  {
+    id: "sin-contratista", ambito: "contrato", sev: 3,
+    nombre: "Contratista sin identificar",
+    corto: "Sin contratista",
+    que: "El contratista figura como «Sin Descripción» o su documento como «No definido».",
+    porque: "Sin identificación no se puede verificar idoneidad, inhabilidades ni concentración. Un contrato así es invisible al control ciudadano.",
+    fuente: "Open Contracting R045 · Transparencia por Colombia",
+    test: c => /sin descripcion/i.test(c.proveedor_adjudicado || "") ||
+               (c.documento_proveedor || "").toLowerCase() === "no definido" || !c.documento_proveedor
+  },
+  {
+    id: "fraccionamiento", ambito: "contrato", sev: 2,
+    nombre: "Posible fraccionamiento",
+    corto: "Fraccionamiento",
+    que: "La misma entidad firmó dos o más contratos con el mismo contratista el mismo día.",
+    porque: "Dividir un objeto único en varios contratos permite eludir la modalidad de selección que correspondería por cuantía. Es la tipología precontractual más frecuente.",
+    fuente: "Fiscalía, Tomo III · Open Contracting R011",
+    contexto: true
+  },
+  {
+    id: "atipico", ambito: "contrato", sev: 2,
+    nombre: "Valor atípico para su tipo",
+    corto: "Atípico",
+    que: "El contrato supera veinte veces el valor promedio de su propio tipo de contrato en el periodo consultado.",
+    porque: "Un valor muy por fuera del rango de su categoría puede ser un contrato legítimamente grande o un precio inflado. Distinguirlo exige abrir el expediente.",
+    fuente: "Open Contracting R016",
+    contexto: true
+  },
+  {
+    id: "concentracion", ambito: "contrato", sev: 2,
+    nombre: "Contratista recurrente",
+    corto: "Recurrente",
+    que: "El contratista acumula cinco o más contratos con la ESAP dentro del periodo consultado.",
+    porque: "La recurrencia no es ilegal, pero concentrar contratos en pocas manos es la condición donde aparecen el direccionamiento y el objeto acomodado.",
+    fuente: "Open Contracting R040 · Fiscalía, Tomo III",
+    contexto: true
+  },
+  {
+    id: "prorroga-larga", ambito: "contrato", sev: 2,
+    nombre: "Prórroga extensa",
+    corto: "Prórroga",
+    que: "Al contrato se le adicionaron más de noventa días de plazo.",
+    porque: "Las adiciones sirven para ocultar contratos nuevos que habrían requerido su propio proceso de selección.",
+    fuente: "Fiscalía, Tomo III, «adiciones irregulares» · Open Contracting R069",
+    test: c => (+c.dias_adicionados || 0) > 90
+  },
+  {
+    id: "anticipo", ambito: "contrato", sev: 2,
+    nombre: "Contrato con anticipo",
+    corto: "Anticipo",
+    que: "El contrato contempla pago adelantado.",
+    porque: "La apropiación del anticipo es una tipología propia de la etapa contractual. En la ESAP el anticipo es rarísimo, así que cada caso merece revisión.",
+    fuente: "Fiscalía, Tomo III, «apropiación del anticipo»",
+    test: c => (+c.valor_de_pago_adelantado || 0) > 0
+  },
+  {
+    id: "cedido", ambito: "contrato", sev: 2,
+    nombre: "Contrato cedido",
+    corto: "Cedido",
+    que: "El contrato fue cedido a un tercero.",
+    porque: "Quien firmó no fue quien ejecutó. La cesión es legal pero, en volumen, puede encubrir que el contratista original era solo un intermediario.",
+    fuente: "Open Contracting R071",
+    test: c => /cedido/i.test(c.estado_contrato || "")
+  },
+  {
+    id: "sin-valor", ambito: "contrato", sev: 1,
+    nombre: "Publicado sin valor",
+    corto: "Sin valor",
+    que: "El contrato está publicado con valor cero.",
+    porque: "Un contrato sin valor publicado no permite control fiscal ni comparación de precios.",
+    fuente: "Open Contracting R063",
+    test: c => (+c.valor_del_contrato || 0) === 0
+  },
+  {
+    id: "sin-fecha", ambito: "contrato", sev: 1,
+    nombre: "Sin fecha de firma",
+    corto: "Sin fecha",
+    que: "El registro no tiene fecha de firma.",
+    porque: "Sin fecha, el contrato no se puede atribuir a ninguna administración ni ubicar en el tiempo.",
+    fuente: "Calidad del dato",
+    test: c => !c.fecha_de_firma
+  },
+  {
+    id: "sin-supervisor", ambito: "contrato", sev: 1,
+    nombre: "Sin supervisor designado",
+    corto: "Sin supervisor",
+    que: "El campo de supervisor está vacío o dice «No definido».",
+    porque: "El supervisor desleal, o inexistente, es la tipología que permite que un contrato se pague sin haberse ejecutado.",
+    fuente: "Fiscalía, Tomo III, «supervisor desleal»",
+    test: c => { const s = (c.nombre_supervisor || "").trim().toLowerCase();
+                 return !s || s === "no definido" || s === "no definida"; }
+  },
+
+  /* ---------------- procesos ---------------- */
+  {
+    id: "cero-ofertas", ambito: "proceso", sev: 3,
+    nombre: "Adjudicado sin ofertas",
+    corto: "Sin ofertas",
+    que: "El proceso se adjudicó aunque el sistema no registra ninguna oferta recibida.",
+    porque: "Adjudicar sin ofertas registradas es una inconsistencia grave: o el dato está mal, o la adjudicación no siguió el procedimiento.",
+    fuente: "Open Contracting R018",
+    test: p => p.adjudicado === "Si" && (+p.respuestas_al_procedimiento || 0) === 0
+  },
+  {
+    id: "unico-oferente", ambito: "proceso", sev: 2,
+    nombre: "Un solo oferente",
+    corto: "Oferente único",
+    que: "El proceso se adjudicó con una sola oferta recibida.",
+    porque: "Es el indicador de competencia más usado en el mundo. Un oferente único puede significar un mercado pequeño, o un pliego hecho a la medida de alguien.",
+    fuente: "Open Contracting R018 · Fiscalía, «direccionamiento»",
+    test: p => p.adjudicado === "Si" && (+p.respuestas_al_procedimiento || 0) === 1
+  },
+  {
+    id: "plazo-corto", ambito: "proceso", sev: 2,
+    nombre: "Plazo corto para ofertar",
+    corto: "Plazo corto",
+    que: "Pasaron menos de cinco días entre la publicación del proceso y el cierre para recibir ofertas.",
+    porque: "Un plazo corto favorece a quien ya sabía del proceso y excluye a los demás. Es manipulación de la licitación en su forma más simple.",
+    fuente: "Open Contracting R003 y R014",
+    test: p => { if (!p.fecha_de_publicacion_del || !p.fecha_de_recepcion_de) return false;
+                 const d = (new Date(p.fecha_de_recepcion_de) - new Date(p.fecha_de_publicacion_del)) / 86400000;
+                 return d >= 0 && d < 5; }
+  },
+  {
+    id: "sin-ahorro", ambito: "proceso", sev: 1,
+    nombre: "Adjudicado casi por el precio base",
+    corto: "Sin ahorro",
+    que: "El valor adjudicado es igual o superior al 99 % del precio base del proceso.",
+    porque: "Cuando la competencia funciona, el precio baja. Adjudicar por el tope, de forma repetida, es el patrón que deja la colusión entre oferentes.",
+    fuente: "Open Contracting R031 · Fiscalía, «colusión»",
+    test: p => { const b = +p.precio_base || 0, a = +p.valor_total_adjudicacion || 0;
+                 return p.adjudicado === "Si" && b > 0 && a >= b * 0.99; }
+  },
+  {
+    id: "invitados-sin-respuesta", ambito: "proceso", sev: 1,
+    nombre: "Muchos invitados, casi ninguna oferta",
+    corto: "Baja respuesta",
+    que: "Se invitó a veinte o más proveedores y respondieron dos o menos.",
+    porque: "Una convocatoria amplia que nadie responde suele indicar requisitos hechos a la medida de un proponente concreto.",
+    fuente: "Open Contracting R019 · Fiscalía, «objeto acomodado»",
+    test: p => (+p.proveedores_invitados || 0) >= 20 && (+p.respuestas_al_procedimiento || 0) <= 2
+  }
+];
+
+const SEV = {
+  3: { nombre: "Crítica", clase: "crit" },
+  2: { nombre: "Alta",    clase: "alta" },
+  1: { nombre: "Media",   clase: "media" }
+};
+
 
 /* ============================================================
    Configuración
@@ -390,29 +555,30 @@ const DS_PROCESOS  = "p6dx-8zbt";
 // arrastra a la Unidad de Búsqueda de Personas Desaparecidas, porque
 // la palabra "desaparecidas" contiene esas cuatro letras.
 const ENTIDADES = [
-  { nit:"899999054", corto:"Sede Central", largo:"ESAP SEDE CENTRAL (Cuenta Oficial)" },
-  { nit:"800248529", corto:"Bolívar", largo:"ESAP TERRITORIAL BOLIVAR" },
-  { nit:"830011682", corto:"Cundinamarca", largo:"ESAP TERRITORIAL CUNDINAMARCA" },
-  { nit:"813006956", corto:"Huila-Caquetá", largo:"ESAP TERRITORIAL HUILA-CAQUETA Y BAJO PUTUMAYO" },
-  { nit:"800117534", corto:"Nariño", largo:"ESAP TERRITORIAL NARIÑO ALTO PUTUMAYO" },
-  { nit:"800117530", corto:"Meta", largo:"ESAP TERRITORIAL META" },
-  { nit:"800117522", corto:"Atlántico", largo:"ESAP TERRITORIAL ATLÁNTICO" },
-  { nit:"800117519", corto:"Antioquia", largo:"ESAP TERRITORIAL ANTIOQUIA" },
-  { nit:"800145876", corto:"N. Santander-Arauca", largo:"ESAP TERRITORIAL NORTE DE SANTANDER ARAUCA" },
-  { nit:"800117524", corto:"Boyacá-Casanare", largo:"ESAP TERRITORIAL BOYACA CASANARE" },
-  { nit:"800117525", corto:"Caldas", largo:"ESAP TERRITORIAL CALDAS" },
-  { nit:"800117541", corto:"Tolima", largo:"ESAP TERRITORIAL TOLIMA" },
-  { nit:"800117537", corto:"Quindío-Risaralda", largo:"ESAP TERRITORIAL QUINDIO RISARALDA" },
-  { nit:"800117540", corto:"Santander", largo:"ESAP TERRITORIAL SANTANDER" },
-  { nit:"800117528", corto:"Cauca", largo:"ESAP TERRITORIAL CAUCA" },
-  { nit:"800117545", corto:"Valle del Cauca", largo:"ESAP TERRITORIAL VALLE DEL CAUCA" }
+  { nit:"899999054", corto:"Sede Central" },
+  { nit:"800248529", corto:"Bolívar" },
+  { nit:"830011682", corto:"Cundinamarca" },
+  { nit:"813006956", corto:"Huila-Caquetá" },
+  { nit:"800117534", corto:"Nariño" },
+  { nit:"800117530", corto:"Meta" },
+  { nit:"800117522", corto:"Atlántico" },
+  { nit:"800117519", corto:"Antioquia" },
+  { nit:"800145876", corto:"N. Santander-Arauca" },
+  { nit:"800117524", corto:"Boyacá-Casanare" },
+  { nit:"800117525", corto:"Caldas" },
+  { nit:"800117541", corto:"Tolima" },
+  { nit:"800117537", corto:"Quindío-Risaralda" },
+  { nit:"800117540", corto:"Santander" },
+  { nit:"800117528", corto:"Cauca" },
+  { nit:"800117545", corto:"Valle del Cauca" }
 ];
 const NIT2NOM = Object.fromEntries(ENTIDADES.map(e => [e.nit, e.corto]));
 
-const VENTANA_NOVEDADES_DIAS = 120;   // ventana de vigilancia para detectar cargues nuevos
-const UMBRAL_IMPOSIBLE = 100e9;       // 100.000 millones: en esta entidad no puede ser real
-const FACTOR_ATIPICO = 20;            // veces el promedio del propio tipo de contrato
-const LS = { seen:"esap.seen.v1", visit:"esap.visit.v1", watch:"esap.watch.v1", theme:"esap.theme.v1" };
+const VENTANA_NOVEDADES_DIAS = 120;
+const UMBRAL_IMPOSIBLE = 100e9;
+const FACTOR_ATIPICO = 20;
+const MIN_RECURRENTE = 5;
+const LS = { seen:"esap.seen.v1", visit:"esap.visit.v1", watch:"esap.watch.v1", theme:"esap.theme.v1", filtros:"esap.filtros.v1" };
 
 /* ============================================================
    Utilidades
@@ -430,18 +596,13 @@ const fmtCOP = n => {
 const fmtPesos = n => "$" + (Number(n)||0).toLocaleString("es-CO",{maximumFractionDigits:0});
 const fmtInt   = n => (Number(n)||0).toLocaleString("es-CO");
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const sq  = s => String(s ?? "").replace(/'/g, "''");           // escape para SoQL
+const sq  = s => String(s ?? "").replace(/'/g, "''");
 const iso = d => d.toISOString().slice(0,10);
 const hoy = () => new Date();
 const masDias = (d,n) => { const x = new Date(d); x.setDate(x.getDate()+n); return x; };
 const fFecha = s => s ? String(s).slice(0,10).split("-").reverse().join("/") : "—";
 const MESES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
 
-/* Enmascarado de documentos de identidad.
-   Los NIT de empresas y entidades se muestran completos: no son dato personal.
-   Las cédulas, tarjetas, pasaportes y cédulas de extranjería de personas
-   naturales se muestran parcialmente. El número completo se sigue usando
-   internamente para agrupar contratos, así que el análisis no pierde nada. */
 const esPersonaNatural = t => /c[eé]dula|extranjer|pasaporte|tarjeta|nuip|registro civil/i.test(String(t||""));
 function maskDoc(doc, tipo){
   const d = String(doc || "").trim();
@@ -454,17 +615,26 @@ function maskDoc(doc, tipo){
 function lsGet(k, def){ try { const v = localStorage.getItem(k); return v==null ? def : JSON.parse(v); } catch(e){ return def; } }
 function lsSet(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
 
-async function soql(dataset, params){
+async function soql(dataset, params, reintento = true){
   const u = new URL(BASE + dataset + ".json");
   for (const [k,v] of Object.entries(params)) if (v !== undefined && v !== null && v !== "") u.searchParams.set(k, v);
-  const r = await fetch(u.toString(), { headers:{ "Accept":"application/json" } });
-  if (!r.ok) {
-    let d = ""; try { d = (await r.json()).message || ""; } catch(e){ d = await r.text().catch(()=>"" ); }
-    throw new Error("SECOP respondió " + r.status + (d ? ": " + d : ""));
+  try {
+    const r = await fetch(u.toString(), { headers:{ "Accept":"application/json" } });
+    if (r.status === 429 && reintento) { await new Promise(s => setTimeout(s, 1500)); return soql(dataset, params, false); }
+    if (!r.ok) {
+      let d = ""; try { d = (await r.json()).message || ""; } catch(e){ d = await r.text().catch(()=>""); }
+      throw new Error("SECOP respondió " + r.status + (d ? ": " + d.slice(0,200) : ""));
+    }
+    return r.json();
+  } catch(e){
+    if (reintento && /NetworkError|Failed to fetch/i.test(e.message)) {
+      await new Promise(s => setTimeout(s, 1200)); return soql(dataset, params, false);
+    }
+    throw e;
   }
-  return r.json();
 }
-const errBox = (el, e) => { el.innerHTML = '<div class="note err"><b>No se pudo consultar.</b><br>'+esc(e.message)+'</div>'; };
+const errBox = (el, e) => { el.innerHTML = '<div class="note err"><b>No se pudo consultar.</b><br>'+esc(e.message)+
+  '<br><span style="font-size:11.5px">Si insiste, es posible que datos.gov.co esté caído o que se haya superado el límite de consultas por minuto. Espera un momento y vuelve a pulsar Consultar.</span></div>'; };
 
 /* ============================================================
    Estado
@@ -473,16 +643,14 @@ const state = {
   nits: ENTIDADES.map(e => e.nit),
   desde: iso(masDias(hoy(), -365)),
   hasta: iso(hoy()),
-  modalidad: "",
-  tipo: "",
-  texto: "",
-  doc: "",          // documento exacto; nunca se escribe en la URL compartible
-  limCon: 500
+  modalidad: "", tipo: "", texto: "", doc: "", limCon: 500
 };
-let cacheContratos = [], cacheCtta = [], cacheProc = [], cacheNov = [];
+let cacheContratos = [], cacheCtta = [], cacheProc = [], cacheNov = [], cacheVenc = [];
+let banderas = [];          // {item, tipo:'contrato'|'proceso', reglas:[regla]}
+let banFiltro = null;       // id de regla
+
 let watch = lsGet(LS.watch, null);
 if (!watch) {
-  // Semilla: lo que ya estaba bajo la lupa antes de existir este monitor.
   watch = { contratos:{}, personas:{}, procesos:{
     "ESAP-SAMEC-008-2026": { label:"Mantenimiento de áreas comunes, Sede Central — Selección Abreviada de Menor Cuantía", ts: Date.now() }
   }};
@@ -490,10 +658,8 @@ if (!watch) {
 }
 watch.contratos ||= {}; watch.personas ||= {}; watch.procesos ||= {};
 
-/* -------- filtros -> cláusula WHERE -------- */
 function whereContratos(extra){
-  const p = [];
-  p.push("nit_entidad in(" + state.nits.map(n => "'"+n+"'").join(",") + ")");
+  const p = ["nit_entidad in(" + state.nits.map(n => "'"+n+"'").join(",") + ")"];
   if (state.desde) p.push("fecha_de_firma >= '" + state.desde + "T00:00:00'");
   if (state.hasta) p.push("fecha_de_firma <= '" + state.hasta + "T23:59:59'");
   if (state.modalidad) p.push("modalidad_de_contratacion = '" + sq(state.modalidad) + "'");
@@ -508,12 +674,11 @@ function whereContratos(extra){
 }
 
 /* ============================================================
-   Estrella de seguimiento
+   Seguimiento
    ============================================================ */
 function isWatched(kind, id){ return !!watch[kind][id]; }
 function toggleWatch(kind, id, label){
-  if (watch[kind][id]) delete watch[kind][id];
-  else watch[kind][id] = { label, ts: Date.now() };
+  if (watch[kind][id]) delete watch[kind][id]; else watch[kind][id] = { label, ts: Date.now() };
   lsSet(LS.watch, watch);
   renderSeguimiento();
   $$('.star[data-k="'+kind+'"]').forEach(b => { if (b.dataset.id === id) b.setAttribute("aria-pressed", isWatched(kind,id)); });
@@ -545,7 +710,7 @@ function downloadCSV(name, csv){
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 400);
 }
 const COLS_CONTRATO = [
-  {t:"Entidad", f:r => NIT2NOM[r.nit_entidad] || r.nombre_entidad},
+  {t:"Entidad", f:r => NIT2NOM[r.nit_entidad] || r.nit_entidad},
   {t:"NIT entidad", f:"nit_entidad"},
   {t:"Referencia", f:"referencia_del_contrato"},
   {t:"Fecha de firma", f:r => (r.fecha_de_firma||"").slice(0,10)},
@@ -556,33 +721,94 @@ const COLS_CONTRATO = [
   {t:"Tipo de documento", f:"tipodocproveedor"},
   {t:"Valor del contrato", f:"valor_del_contrato"},
   {t:"Valor pagado", f:"valor_pagado"},
+  {t:"Anticipo", f:"valor_de_pago_adelantado"},
+  {t:"Días adicionados", f:"dias_adicionados"},
   {t:"Modalidad", f:"modalidad_de_contratacion"},
   {t:"Tipo", f:"tipo_de_contrato"},
   {t:"Estado", f:"estado_contrato"},
   {t:"Supervisor", f:"nombre_supervisor"},
   {t:"Ordenador del gasto", f:"nombre_ordenador_del_gasto"},
+  {t:"Banderas rojas", f:r => (r.__flags||[]).map(f => f.nombre).join(" | ")},
   {t:"Objeto", f:"objeto_del_contrato"},
   {t:"Expediente SECOP", f:r => r.urlproceso?.url || ""}
 ];
 
 /* ============================================================
-   Tabla de contratos (reutilizada en varias pestañas)
+   Motor de banderas
+   ============================================================ */
+function construirContexto(contratos){
+  const porTipo = {}, porDoc = {}, porDia = {};
+  for (const c of contratos){
+    const v = +c.valor_del_contrato || 0;
+    if (v > 0 && v < UMBRAL_IMPOSIBLE){
+      const t = c.tipo_de_contrato || "—";
+      (porTipo[t] ||= { s:0, n:0 }); porTipo[t].s += v; porTipo[t].n++;
+    }
+    const d = c.documento_proveedor;
+    if (d && d.toLowerCase() !== "no definido") porDoc[d] = (porDoc[d]||0) + 1;
+    if (d && c.fecha_de_firma){
+      const k = c.nit_entidad + "|" + d + "|" + c.fecha_de_firma.slice(0,10);
+      porDia[k] = (porDia[k]||0) + 1;
+    }
+  }
+  const promTipo = {};
+  for (const [t,o] of Object.entries(porTipo)) promTipo[t] = o.n ? o.s/o.n : 0;
+  return { promTipo, porDoc, porDia };
+}
+
+function evaluarContrato(c, ctx){
+  const out = [];
+  for (const r of REGLAS){
+    if (r.ambito !== "contrato") continue;
+    if (r.test) { if (r.test(c)) out.push(r); continue; }
+    if (r.id === "atipico"){
+      const v = +c.valor_del_contrato || 0, p = ctx.promTipo[c.tipo_de_contrato] || 0;
+      if (v < UMBRAL_IMPOSIBLE && p > 0 && v > p * FACTOR_ATIPICO) out.push(r);
+    }
+    if (r.id === "concentracion"){
+      const n = ctx.porDoc[c.documento_proveedor] || 0;
+      if (n >= MIN_RECURRENTE) out.push(r);
+    }
+    if (r.id === "fraccionamiento" && c.documento_proveedor && c.fecha_de_firma){
+      const k = c.nit_entidad + "|" + c.documento_proveedor + "|" + c.fecha_de_firma.slice(0,10);
+      if ((ctx.porDia[k] || 0) >= 2) out.push(r);
+    }
+  }
+  return out.sort((a,b) => b.sev - a.sev);
+}
+function evaluarProceso(p){
+  return REGLAS.filter(r => r.ambito === "proceso" && r.test && r.test(p)).sort((a,b) => b.sev - a.sev);
+}
+const tagsHTML = fl => !fl.length ? '<span class="flag ok">sin señales</span>'
+  : '<div class="tags">' + fl.map(f => '<span class="tag '+SEV[f.sev].clase+'" title="'+esc(f.que)+'">'+esc(f.corto)+'</span>').join("") + "</div>";
+
+/* ============================================================
+   Tablas
    ============================================================ */
 const SEL_CONTRATO = ["nit_entidad","referencia_del_contrato","id_contrato","fecha_de_firma",
   "fecha_de_inicio_del_contrato","fecha_de_fin_del_contrato","proveedor_adjudicado","documento_proveedor",
   "valor_del_contrato","valor_pagado","modalidad_de_contratacion","tipo_de_contrato","estado_contrato",
-  "objeto_del_contrato","nombre_supervisor","nombre_ordenador_del_gasto","urlproceso","origen_de_los_recursos","tipodocproveedor",
-  "duraci_n_del_contrato","valor_pendiente_de_pago"].join(",");
+  "objeto_del_contrato","nombre_supervisor","nombre_ordenador_del_gasto","urlproceso","origen_de_los_recursos",
+  "tipodocproveedor","duraci_n_del_contrato","valor_pendiente_de_pago","valor_de_pago_adelantado","dias_adicionados"].join(",");
+
+const SEL_PROCESO = "entidad,nit_entidad,referencia_del_proceso,descripci_n_del_procedimiento,precio_base," +
+  "modalidad_de_contratacion,estado_del_procedimiento,adjudicado,nombre_del_proveedor,valor_total_adjudicacion," +
+  "proveedores_invitados,respuestas_al_procedimiento,tipo_de_contrato,urlproceso,fase,fecha_de_publicacion_del," +
+  "fecha_adjudicacion,fecha_de_recepcion_de";
+
+const refBase = r => String(r.referencia_del_proceso || "").replace(/\s*\(.*$/, "").trim();
 
 function tablaContratos(rows, opts = {}){
   if (!rows.length) return '<div class="empty">No hay contratos que cumplan estos filtros.</div>';
-  const flag = opts.flag;
-  let h = '<div class="tw"><table><thead><tr><th></th><th>Entidad</th><th>Referencia</th><th>Firma</th>'+
-          '<th>Contratista</th><th class="num">Valor</th><th>Modalidad</th>'+
-          (flag ? '<th>Señal</th>' : '<th>Estado</th>')+'<th>Objeto</th><th></th></tr></thead><tbody>';
+  const col = opts.senal ? "Señal" : "Estado";
+  let h = '<div class="tw"><table data-tabla="'+(opts.id||"")+'"><thead><tr><th></th>'+
+    '<th data-sort="ent">Entidad</th><th data-sort="ref">Referencia</th><th data-sort="fecha">Firma</th>'+
+    '<th data-sort="prov">Contratista</th><th class="num" data-sort="valor">Valor</th><th data-sort="mod">Modalidad</th>'+
+    '<th>'+col+'</th><th>Objeto</th><th></th></tr></thead><tbody>';
   for (const r of rows){
     const id = r.id_contrato || r.referencia_del_contrato;
     const val = Number(r.valor_del_contrato) || 0;
+    const fl = r.__flags || [];
     h += "<tr>"
       + "<td>" + starHTML("contratos", id, (r.referencia_del_contrato||"") + " · " + (r.proveedor_adjudicado||"")) + "</td>"
       + "<td>" + esc(NIT2NOM[r.nit_entidad] || r.nit_entidad) + "</td>"
@@ -592,15 +818,66 @@ function tablaContratos(rows, opts = {}){
         + '<br><span style="color:var(--ink-muted);font-size:11.5px" class="mono">' + esc(maskDoc(r.documento_proveedor, r.tipodocproveedor)) + "</span></td>"
       + '<td class="num" title="' + fmtPesos(val) + '">' + fmtCOP(val) + "</td>"
       + "<td>" + esc(r.modalidad_de_contratacion || "—") + "</td>"
-      + "<td>" + (flag ? flag(r) : esc(r.estado_contrato || "—")) + "</td>"
-      + '<td class="obj"><div class="o">' + esc(r.objeto_del_contrato || r.descripcion_del_proceso || "—") + "</div></td>"
+      + "<td>" + (opts.senal ? tagsHTML(fl) : esc(r.estado_contrato || "—")) + "</td>"
+      + '<td class="obj"><div class="o">' + esc(r.objeto_del_contrato || "—") + "</div></td>"
       + '<td><button class="linkish" data-ficha="' + esc(id) + '">Ficha</button></td>'
       + "</tr>";
   }
   return h + "</tbody></table></div>";
 }
 
-/* ---- ficha imprimible ---- */
+function tablaProcesos(rows){
+  if (!rows.length) return '<div class="empty">Sin procesos con estos filtros.</div>';
+  let h = '<div class="tw"><table><thead><tr><th></th><th>Entidad</th><th>Proceso</th><th>Fase</th>'
+        + '<th>Publicado</th><th class="num">Precio base</th><th>Estado</th>'
+        + '<th class="num">Invitados / Respuestas</th><th>Adjudicado a</th><th>Señal</th><th>Objeto</th><th></th></tr></thead><tbody>';
+  for (const r of rows){
+    const inv = Number(r.proveedores_invitados)||0, res = Number(r.respuestas_al_procedimiento)||0;
+    const ref = refBase(r), adj = r.adjudicado === "Si";
+    const base = Number(r.precio_base)||0, dado = Number(r.valor_total_adjudicacion)||0;
+    const pct = adj && base > 0 ? (dado/base*100) : null;
+    h += "<tr>"
+      + "<td>" + starHTML("procesos", ref, ref + " — " + (r.descripci_n_del_procedimiento||"").slice(0,80)) + "</td>"
+      + "<td>" + esc(NIT2NOM[r.nit_entidad] || r.entidad || "—") + "</td>"
+      + '<td class="mono">' + esc(ref || "—") + "</td>"
+      + "<td>" + esc(r.fase || "—") + "</td>"
+      + '<td class="mono">' + fFecha(r.fecha_de_publicacion_del) + "</td>"
+      + '<td class="num" title="'+fmtPesos(base)+'">' + fmtCOP(base) + "</td>"
+      + "<td>" + esc(r.estado_del_procedimiento||"—") + "</td>"
+      + '<td class="num">' + inv + " / " + res + "</td>"
+      + "<td>" + (adj ? esc(r.nombre_del_proveedor||"—") + '<br><span style="color:var(--ink-muted);font-size:11.5px">'
+          + fmtCOP(dado) + (pct !== null ? " · " + pct.toFixed(1) + "% del base" : "") + "</span>"
+          : '<span style="color:var(--ink-muted)">No adjudicado</span>') + "</td>"
+      + "<td>" + tagsHTML(r.__flags || []) + "</td>"
+      + '<td class="obj"><div class="o">' + esc(r.descripci_n_del_procedimiento||"—") + "</div></td>"
+      + "<td>" + (r.urlproceso?.url ? '<a href="'+esc(r.urlproceso.url)+'" target="_blank" rel="noopener">SECOP</a>' : "") + "</td>"
+      + "</tr>";
+  }
+  return h + "</tbody></table></div>";
+}
+
+/* ---- ordenamiento por columna ---- */
+const ORD = { ent:r=>NIT2NOM[r.nit_entidad]||"", ref:r=>r.referencia_del_contrato||"",
+  fecha:r=>r.fecha_de_firma||"", prov:r=>r.proveedor_adjudicado||"",
+  valor:r=>+r.valor_del_contrato||0, mod:r=>r.modalidad_de_contratacion||"" };
+let ordEstado = {};
+document.addEventListener("click", e => {
+  const th = e.target.closest("th[data-sort]"); if (!th) return;
+  const tabla = th.closest("table")?.dataset.tabla; if (!tabla) return;
+  const k = th.dataset.sort;
+  const prev = ordEstado[tabla] || {};
+  const dir = (prev.k === k && prev.dir === "asc") ? "desc" : "asc";
+  ordEstado[tabla] = { k, dir };
+  const fuente = { contratos: cacheContratos, novedades: cacheNov, vencimientos: cacheVenc }[tabla];
+  if (!fuente) return;
+  const f = ORD[k], s = dir === "asc" ? 1 : -1;
+  fuente.sort((a,b) => { const x=f(a), y=f(b); return (x>y?1:x<y?-1:0)*s; });
+  const destino = { contratos:"#conTabla", novedades:"#novTabla", vencimientos:"#senVenc" }[tabla];
+  const senal = tabla !== "contratos";
+  $(destino).innerHTML = tablaContratos(fuente, { id: tabla, senal });
+});
+
+/* ---- ficha ---- */
 const fichaIndex = new Map();
 function indexar(rows){ for (const r of rows) fichaIndex.set(r.id_contrato || r.referencia_del_contrato, r); }
 document.addEventListener("click", e => {
@@ -611,8 +888,7 @@ document.addEventListener("click", e => {
 document.addEventListener("keydown", e => { if (e.key === "Escape") $("#sheet").classList.remove("on"); });
 
 function abrirFicha(id){
-  const r = fichaIndex.get(id);
-  if (!r) return;
+  const r = fichaIndex.get(id); if (!r) return;
   const val = Number(r.valor_del_contrato)||0, pag = Number(r.valor_pagado)||0;
   const pct = val > 0 ? Math.min(100, pag/val*100) : 0;
   const kv = [
@@ -623,6 +899,8 @@ function abrirFicha(id){
     ["Valor del contrato", fmtPesos(val)],
     ["Valor pagado", fmtPesos(pag) + (val>0 ? "  (" + pct.toFixed(1) + "% de ejecución financiera)" : "")],
     ["Pendiente de pago", fmtPesos(r.valor_pendiente_de_pago)],
+    ["Anticipo", (+r.valor_de_pago_adelantado||0) > 0 ? fmtPesos(r.valor_de_pago_adelantado) : "Sin anticipo"],
+    ["Días adicionados", r.dias_adicionados],
     ["Modalidad de contratación", r.modalidad_de_contratacion],
     ["Tipo de contrato", r.tipo_de_contrato],
     ["Estado", r.estado_contrato],
@@ -636,10 +914,12 @@ function abrirFicha(id){
     ["Objeto", r.objeto_del_contrato]
   ].filter(x => x[1] && x[1] !== "No definido" && x[1] !== "No Definido");
   const url = r.urlproceso?.url || "";
+  const fl = r.__flags || [];
   $("#sheetIn").innerHTML =
     "<h3>" + esc(r.referencia_del_contrato || "Contrato") + "</h3>" +
-    '<div class="ref">Identificador SECOP ' + esc(r.id_contrato || "—") +
-      " · consultado el " + new Date().toLocaleString("es-CO") + "</div>" +
+    '<div class="ref">Identificador SECOP ' + esc(r.id_contrato || "—") + " · consultado el " + new Date().toLocaleString("es-CO") + "</div>" +
+    (fl.length ? '<div class="note"><b>Banderas rojas de este contrato</b><br>' +
+      fl.map(f => "<b>" + esc(f.nombre) + ".</b> " + esc(f.que) + " " + esc(f.porque)).join("<br>") + "</div>" : "") +
     '<dl class="kv">' + kv.map(([k,v]) => "<dt>"+esc(k)+"</dt><dd>"+esc(v)+"</dd>").join("") + "</dl>" +
     (url ? '<p style="margin-top:16px;font-size:12.5px">Expediente oficial: <a href="'+esc(url)+'" target="_blank" rel="noopener">'+esc(url)+"</a></p>" : "") +
     '<div class="sheet-act"><button class="btn" onclick="window.print()">Imprimir o guardar en PDF</button>' +
@@ -647,23 +927,29 @@ function abrirFicha(id){
   $("#sheet").classList.add("on");
 }
 
+function tile(k, v, n, meter, clase){
+  return '<div class="tile'+(clase?" "+clase:"")+'"><div class="k">'+esc(k)+'</div><div class="v">'+esc(v)+'</div>'+
+         (n ? '<div class="n">'+esc(n)+'</div>' : "") +
+         (meter !== undefined ? '<div class="meter"><i style="width:'+(meter*100).toFixed(1)+'%"></i></div>' : "") + "</div>";
+}
+
 /* ============================================================
    NOVEDADES
    ============================================================ */
 async function cargarNovedades(){
-  const cont = $("#novTabla");
-  const intro = $("#novIntro");
+  const cont = $("#novTabla"), intro = $("#novIntro");
   try {
     const desde = iso(masDias(hoy(), -VENTANA_NOVEDADES_DIAS));
     const w = "nit_entidad in(" + state.nits.map(n=>"'"+n+"'").join(",") + ") AND fecha_de_firma >= '" + desde + "T00:00:00'";
     const rows = await soql(DS_CONTRATOS, { "$select":SEL_CONTRATO, "$where":w, "$order":"fecha_de_firma DESC", "$limit":5000 });
+    const ctx = construirContexto(rows);
+    for (const r of rows) r.__flags = evaluarContrato(r, ctx);
     indexar(rows);
 
     const seen = new Set(lsGet(LS.seen, []));
     const primeraVez = seen.size === 0;
-    const nuevos = primeraVez
-      ? rows.filter(r => r.fecha_de_firma >= iso(masDias(hoy(), -30)))
-      : rows.filter(r => !seen.has(r.id_contrato));
+    const nuevos = primeraVez ? rows.filter(r => r.fecha_de_firma >= iso(masDias(hoy(), -30)))
+                              : rows.filter(r => !seen.has(r.id_contrato));
     cacheNov = nuevos;
 
     const ultima = lsGet(LS.visit, null);
@@ -673,189 +959,152 @@ async function cargarNovedades(){
 
     const valNuevos = nuevos.reduce((a,r) => a + (Number(r.valor_del_contrato)||0), 0);
     const directos  = nuevos.filter(r => (r.modalidad_de_contratacion||"").toLowerCase().includes("directa")).length;
+    const conBandera = nuevos.filter(r => r.__flags.some(f => f.sev >= 2)).length;
     $("#novTiles").innerHTML =
       tile("Contratos nuevos", fmtInt(nuevos.length), primeraVez ? "firmados en los últimos 30 días" : "no vistos en visitas anteriores") +
+      tile("Con bandera roja", fmtInt(conBandera), "severidad alta o crítica", undefined, conBandera ? "alta" : "") +
       tile("Valor de lo nuevo", fmtCOP(valNuevos), valNuevos ? fmtPesos(valNuevos) : "") +
-      tile("Por contratación directa", fmtInt(directos), nuevos.length ? (directos/nuevos.length*100).toFixed(0) + "% de los nuevos" : "", nuevos.length ? directos/nuevos.length : 0) +
-      tile("Ventana de vigilancia", VENTANA_NOVEDADES_DIAS + " días", "desde el " + fFecha(desde));
+      tile("Por contratación directa", fmtInt(directos), nuevos.length ? (directos/nuevos.length*100).toFixed(0) + "% de los nuevos" : "", nuevos.length ? directos/nuevos.length : 0);
 
-    const c = $("#cNov"); c.textContent = nuevos.length; c.classList.toggle("hot", nuevos.length > 0);
-    cont.innerHTML = tablaContratos(nuevos.slice(0,300));
+    const c = $("#cNov"); c.textContent = nuevos.length; c.classList.toggle("hot", conBandera > 0);
+    cont.innerHTML = tablaContratos(nuevos.slice(0,300), { id:"novedades", senal:true });
 
-    // Marcar todo lo de la ventana como visto, y guardar la visita.
     lsSet(LS.seen, rows.map(r => r.id_contrato));
     lsSet(LS.visit, Date.now());
-
     dibujarChart(rows);
   } catch(e){ errBox(cont, e); $("#chartWrap").innerHTML = ""; }
 }
 
-function tile(k, v, n, meter){
-  return '<div class="tile"><div class="k">'+esc(k)+'</div><div class="v">'+esc(v)+'</div>'+
-         (n ? '<div class="n">'+esc(n)+'</div>' : "") +
-         (meter !== undefined ? '<div class="meter"><i style="width:'+(meter*100).toFixed(1)+'%"></i></div>' : "") +
-         "</div>";
-}
-
-/* ---- gráfico de contratos por mes ---- */
 function dibujarChart(rows){
-  const wrap = $("#chartWrap");
-  const by = new Map();
-  for (const r of rows){
-    const k = (r.fecha_de_firma||"").slice(0,7);
-    if (k) by.set(k, (by.get(k)||0) + 1);
-  }
+  const wrap = $("#chartWrap"), by = new Map();
+  for (const r of rows){ const k = (r.fecha_de_firma||"").slice(0,7); if (k) by.set(k, (by.get(k)||0)+1); }
   const keys = [...by.keys()].sort();
-  if (!keys.length){ wrap.innerHTML = '<div class="empty">Sin datos en el período.</div>'; return; }
-  const vals = keys.map(k => by.get(k));
-  const max = Math.max(...vals);
-  const W = 1000, H = 190, padL = 34, padR = 8, padT = 12, padB = 26;
-  const iw = W - padL - padR, ih = H - padT - padB;
+  if (!keys.length){ wrap.innerHTML = '<div class="empty">Sin datos en el periodo.</div>'; return; }
+  const max = Math.max(...keys.map(k=>by.get(k)));
+  const W=1000,H=190,padL=34,padR=8,padT=12,padB=26, iw=W-padL-padR, ih=H-padT-padB;
   const bw = Math.max(3, iw/keys.length - 3);
-
   let g = "";
-  for (let i = 0; i <= 3; i++){
-    const y = padT + ih - (ih*i/3);
-    g += '<line class="gl" x1="'+padL+'" y1="'+y.toFixed(1)+'" x2="'+(W-padR)+'" y2="'+y.toFixed(1)+'"/>' +
-         '<text x="'+(padL-6)+'" y="'+(y+3).toFixed(1)+'" text-anchor="end">'+Math.round(max*i/3)+"</text>";
-  }
-  let bars = "";
-  keys.forEach((k,i) => {
-    const x = padL + i*(iw/keys.length) + 1.5;
-    const h = Math.max(2, (by.get(k)/max)*ih);
-    const y = padT + ih - h;
-    const [yy,mm] = k.split("-");
-    const lbl = MESES[+mm-1] + " " + yy.slice(2);
-    bars += '<rect class="bar" x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+h.toFixed(1)+'" rx="4"/>';
-    bars += '<rect class="hit" x="'+x.toFixed(1)+'" y="'+padT+'" width="'+bw.toFixed(1)+'" height="'+ih+'" '+
-            'data-l="'+lbl+'" data-v="'+by.get(k)+'"/>';
-  });
-  let ticks = "";
+  for (let i=0;i<=3;i++){ const y = padT+ih-(ih*i/3);
+    g += '<line class="gl" x1="'+padL+'" y1="'+y.toFixed(1)+'" x2="'+(W-padR)+'" y2="'+y.toFixed(1)+'"/>'+
+         '<text x="'+(padL-6)+'" y="'+(y+3).toFixed(1)+'" text-anchor="end">'+Math.round(max*i/3)+"</text>"; }
+  let bars="", ticks="";
   const step = Math.ceil(keys.length/8);
   keys.forEach((k,i) => {
-    if (i % step) return;
-    const x = padL + i*(iw/keys.length) + bw/2;
-    const [yy,mm] = k.split("-");
-    ticks += '<text x="'+x.toFixed(1)+'" y="'+(H-8)+'" text-anchor="middle">'+MESES[+mm-1]+" "+yy.slice(2)+"</text>";
+    const x = padL + i*(iw/keys.length) + 1.5;
+    const h = Math.max(2, (by.get(k)/max)*ih), y = padT+ih-h;
+    const [yy,mm] = k.split("-"), lbl = MESES[+mm-1]+" "+yy.slice(2);
+    bars += '<rect class="bar" x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+h.toFixed(1)+'" rx="4"/>';
+    bars += '<rect class="hit" x="'+x.toFixed(1)+'" y="'+padT+'" width="'+bw.toFixed(1)+'" height="'+ih+'" data-l="'+lbl+'" data-v="'+by.get(k)+'"/>';
+    if (!(i%step)) ticks += '<text x="'+(x+bw/2).toFixed(1)+'" y="'+(H-8)+'" text-anchor="middle">'+lbl+"</text>";
   });
-  wrap.innerHTML = '<svg class="chart" viewBox="0 0 '+W+" "+H+'" preserveAspectRatio="none" role="img" '+
-    'aria-label="Contratos firmados por mes">'+g+bars+
-    '<line class="bl" x1="'+padL+'" y1="'+(padT+ih)+'" x2="'+(W-padR)+'" y2="'+(padT+ih)+'"/>'+ticks+"</svg>";
-
+  wrap.innerHTML = '<svg class="chart" viewBox="0 0 '+W+" "+H+'" preserveAspectRatio="none" role="img" aria-label="Contratos firmados por mes">'+
+    g+bars+'<line class="bl" x1="'+padL+'" y1="'+(padT+ih)+'" x2="'+(W-padR)+'" y2="'+(padT+ih)+'"/>'+ticks+"</svg>";
   const tip = $("#tip");
   wrap.querySelectorAll("rect.hit").forEach(el => {
     el.addEventListener("mousemove", ev => {
       tip.innerHTML = "<b>"+el.dataset.v+" contratos</b>"+el.dataset.l;
       tip.style.opacity = 1;
       tip.style.left = Math.min(window.innerWidth-160, ev.clientX+12)+"px";
-      tip.style.top  = (ev.clientY-46)+"px";
+      tip.style.top = (ev.clientY-46)+"px";
     });
     el.addEventListener("mouseleave", () => tip.style.opacity = 0);
   });
 }
 
 /* ============================================================
-   SEÑALES
+   BANDERAS ROJAS
    ============================================================ */
-async function cargarSenales(){
-  cargarAtipicos();
-  cargarModalidades();
-  cargarVencimientos();
-}
-
-async function cargarAtipicos(){
-  const cont = $("#senAtip");
+async function cargarBanderas(){
+  const cont = $("#banReglas");
+  cont.innerHTML = '<div class="loading"><span class="spin"></span>Evaluando reglas…</div>';
   try {
-    const wLimpio = whereContratos("valor_del_contrato < " + UMBRAL_IMPOSIBLE);
-    const proms = await soql(DS_CONTRATOS, {
-      "$select":"tipo_de_contrato, avg(valor_del_contrato) as prom, count(1) as n",
-      "$where": wLimpio, "$group":"tipo_de_contrato", "$limit":200
-    });
-    const promPorTipo = Object.fromEntries(proms.map(p => [p.tipo_de_contrato, Number(p.prom)||0]));
+    const nitsIn = "nit_entidad in(" + state.nits.map(n=>"'"+n+"'").join(",") + ")";
+    const [contratos, huerfanos, procesos] = await Promise.all([
+      soql(DS_CONTRATOS, { "$select":SEL_CONTRATO, "$where":whereContratos(), "$order":"fecha_de_firma DESC", "$limit":3000 }),
+      soql(DS_CONTRATOS, { "$select":SEL_CONTRATO, "$where":nitsIn + " AND fecha_de_firma IS NULL", "$limit":400 }),
+      soql(DS_PROCESOS,  { "$select":SEL_PROCESO, "$where":nitsIn + (state.desde ? " AND fecha_de_publicacion_del >= '"+state.desde+"T00:00:00'" : ""),
+                           "$order":"fecha_de_publicacion_del DESC", "$limit":1500 })
+    ]);
+    const todos = contratos.concat(huerfanos);
+    const ctx = construirContexto(contratos);
+    for (const c of todos) c.__flags = evaluarContrato(c, ctx);
+    for (const p of procesos) p.__flags = evaluarProceso(p);
+    indexar(todos);
 
-    const top = await soql(DS_CONTRATOS, {
-      "$select":SEL_CONTRATO, "$where":whereContratos(), "$order":"valor_del_contrato DESC", "$limit":300
-    });
-    indexar(top);
+    banderas = [];
+    for (const c of todos) if (c.__flags.length) banderas.push({ tipo:"contrato", item:c, reglas:c.__flags });
+    for (const p of procesos) if (p.__flags.length) banderas.push({ tipo:"proceso", item:p, reglas:p.__flags });
+    banderas.sort((a,b) => b.reglas[0].sev - a.reglas[0].sev ||
+      String(b.item.fecha_de_firma || b.item.fecha_de_publicacion_del || "").localeCompare(String(a.item.fecha_de_firma || a.item.fecha_de_publicacion_del || "")));
 
-    const marcados = top.map(r => {
-      const v = Number(r.valor_del_contrato)||0;
-      const p = promPorTipo[r.tipo_de_contrato] || 0;
-      if (v >= UMBRAL_IMPOSIBLE) return { r, nivel:"crit", txt:"Valor imposible" };
-      if (p > 0 && v > p*FACTOR_ATIPICO) return { r, nivel:"ser", txt:(v/p).toFixed(0) + "× el promedio de su tipo" };
-      return null;
-    }).filter(Boolean);
+    const porSev = { 3:0, 2:0, 1:0 };
+    for (const b of banderas) porSev[b.reglas[0].sev]++;
+    $("#banTiles").innerHTML =
+      tile("Críticas", fmtInt(porSev[3]), "exigen revisión inmediata", undefined, porSev[3] ? "crit" : "") +
+      tile("Altas", fmtInt(porSev[2]), "merecen abrir el expediente", undefined, porSev[2] ? "alta" : "") +
+      tile("Medias", fmtInt(porSev[1]), "señales de transparencia", undefined, porSev[1] ? "media" : "") +
+      tile("Registros revisados", fmtInt(todos.length + procesos.length), fmtInt(todos.length)+" contratos y "+fmtInt(procesos.length)+" procesos");
 
-    const imposibles = marcados.filter(m => m.nivel === "crit");
-    const sumaImp = imposibles.reduce((a,m) => a + (Number(m.r.valor_del_contrato)||0), 0);
+    const conteo = {};
+    for (const b of banderas) for (const r of b.reglas) conteo[r.id] = (conteo[r.id]||0) + 1;
+    cont.innerHTML = REGLAS.filter(r => conteo[r.id]).sort((a,b) => b.sev - a.sev || conteo[b.id]-conteo[a.id]).map(r =>
+      '<div class="regla" data-regla="'+r.id+'" style="cursor:pointer">'+
+      '<h4><span class="flag '+SEV[r.sev].clase+'">'+SEV[r.sev].nombre+"</span> "+esc(r.nombre)+
+      '<span class="n">'+fmtInt(conteo[r.id])+" registro"+(conteo[r.id]===1?"":"s")+"</span></h4>"+
+      '<div class="meta">'+esc(r.ambito === "contrato" ? "Contratos" : "Procesos")+" · "+esc(r.fuente)+"</div>"+
+      "<p>"+esc(r.que)+"</p><p style='color:var(--ink-muted)'>"+esc(r.porque)+"</p></div>").join("")
+      || '<div class="empty">Ninguna regla se activó con estos filtros.</div>';
 
-    $("#senTiles").innerHTML =
-      tile("Valores imposibles", fmtInt(imposibles.length), imposibles.length ? "inflan el total en " + fmtCOP(sumaImp) : "ninguno en este período") +
-      tile("Atípicos por tipo", fmtInt(marcados.length - imposibles.length), "más de " + FACTOR_ATIPICO + "× el promedio de su tipo") +
-      tile("Tipos de contrato", fmtInt(proms.length), "en el período consultado");
-
-    cont.innerHTML = marcados.length
-      ? tablaContratos(marcados.map(m => m.r), {
-          flag: r => {
-            const m = marcados.find(x => x.r === r);
-            return '<span class="flag '+m.nivel+'">'+esc(m.txt)+"</span>";
-          }
-        })
-      : '<div class="empty">Ningún valor atípico con estos filtros. Amplía el rango de fechas si esperabas encontrar alguno.</div>';
-    $("#cSen").textContent = marcados.length;
-    $("#cSen").classList.toggle("hot", imposibles.length > 0);
+    const cb = $("#cBan");
+    cb.textContent = banderas.length;
+    cb.classList.toggle("hot", porSev[3] > 0);
+    pintarBanderas();
   } catch(e){ errBox(cont, e); }
 }
 
-async function cargarModalidades(){
-  const cont = $("#senModal");
-  try {
-    const rows = await soql(DS_CONTRATOS, {
-      "$select":"modalidad_de_contratacion, count(1) as n, sum(valor_del_contrato) as v",
-      "$where": whereContratos("valor_del_contrato < " + UMBRAL_IMPOSIBLE),
-      "$group":"modalidad_de_contratacion", "$order":"n DESC", "$limit":60
-    });
-    const tot = rows.reduce((a,r) => a + Number(r.n), 0);
-    const totV = rows.reduce((a,r) => a + (Number(r.v)||0), 0);
-    if (!tot){ cont.innerHTML = '<div class="empty">Sin datos.</div>'; return; }
-    let h = '<div class="tw"><table><thead><tr><th>Modalidad</th><th class="num">Contratos</th><th class="num">% de los contratos</th><th class="num">Valor</th><th class="num">% del valor</th></tr></thead><tbody>';
-    for (const r of rows){
-      const p = Number(r.n)/tot, pv = totV ? (Number(r.v)||0)/totV : 0;
-      h += "<tr><td>"+esc(r.modalidad_de_contratacion||"—")+"</td>"
-        + '<td class="num">'+fmtInt(r.n)+"</td>"
-        + '<td class="num">'+(p*100).toFixed(1)+"%</td>"
-        + '<td class="num" title="'+fmtPesos(r.v)+'">'+fmtCOP(r.v)+"</td>"
-        + '<td class="num">'+(pv*100).toFixed(1)+"%</td></tr>";
-    }
-    h += "</tbody></table></div>";
-    const dir = rows.filter(r => (r.modalidad_de_contratacion||"").toLowerCase().includes("directa"));
-    const nDir = dir.reduce((a,r)=>a+Number(r.n),0);
-    cont.innerHTML =
-      '<div class="tiles">'+tile("Contratación directa", (nDir/tot*100).toFixed(1)+"%",
-        fmtInt(nDir)+" de "+fmtInt(tot)+" contratos", nDir/tot)+"</div>" + h +
-      '<p class="sub" style="margin-top:12px">Un porcentaje alto de contratación directa no es por sí solo una irregularidad: la prestación de servicios profesionales se adjudica legalmente así. Lo que sí dice algo es la tendencia en el tiempo y qué se está adjudicando por esa vía.</p>';
-  } catch(e){ errBox(cont, e); }
+function pintarBanderas(){
+  const min = +$("#banSev").value || 1;
+  let lista = banderas.filter(b => b.reglas[0].sev >= min);
+  if (banFiltro) lista = lista.filter(b => b.reglas.some(r => r.id === banFiltro));
+  const reg = REGLAS.find(r => r.id === banFiltro);
+  $("#banFiltroTxt").textContent = (banFiltro ? "· filtrado por «" + reg.nombre + "» " : "") + "· " + fmtInt(lista.length) + " registros";
+  if (!lista.length){ $("#banTabla").innerHTML = '<div class="empty">Nada marcado con este filtro. Baja la severidad mínima o amplía el rango de fechas.</div>'; return; }
+  let h = '<div class="tw"><table><thead><tr><th></th><th>Severidad</th><th>Qué es</th><th>Entidad</th><th>Referencia</th>'
+        + '<th>Fecha</th><th>Contratista o proveedor</th><th class="num">Valor</th><th>Banderas</th><th></th></tr></thead><tbody>';
+  for (const b of lista.slice(0,600)){
+    const it = b.item, esC = b.tipo === "contrato";
+    const sev = SEV[b.reglas[0].sev];
+    const ref = esC ? (it.referencia_del_contrato || "—") : refBase(it);
+    const id  = esC ? (it.id_contrato || it.referencia_del_contrato) : ref;
+    const fecha = esC ? it.fecha_de_firma : it.fecha_de_publicacion_del;
+    const prov = esC ? it.proveedor_adjudicado : (it.adjudicado === "Si" ? it.nombre_del_proveedor : "No adjudicado");
+    const val = esC ? (+it.valor_del_contrato||0) : (+it.precio_base||0);
+    h += "<tr>"
+      + "<td>" + starHTML(esC ? "contratos" : "procesos", id, ref + " · " + (prov||"")) + "</td>"
+      + '<td><span class="flag '+sev.clase+'">'+sev.nombre+"</span></td>"
+      + "<td>" + (esC ? "Contrato" : "Proceso") + "</td>"
+      + "<td>" + esc(NIT2NOM[it.nit_entidad] || it.nit_entidad || "—") + "</td>"
+      + '<td class="mono">' + esc(ref) + "</td>"
+      + '<td class="mono">' + fFecha(fecha) + "</td>"
+      + "<td>" + esc(prov || "—") + (esC ? '<br><span style="color:var(--ink-muted);font-size:11.5px" class="mono">'+esc(maskDoc(it.documento_proveedor, it.tipodocproveedor))+"</span>" : "") + "</td>"
+      + '<td class="num" title="'+fmtPesos(val)+'">' + fmtCOP(val) + "</td>"
+      + "<td>" + tagsHTML(b.reglas) + "</td>"
+      + "<td>" + (esC ? '<button class="linkish" data-ficha="'+esc(id)+'">Ficha</button>'
+                      : (it.urlproceso?.url ? '<a href="'+esc(it.urlproceso.url)+'" target="_blank" rel="noopener">SECOP</a>' : "")) + "</td>"
+      + "</tr>";
+  }
+  $("#banTabla").innerHTML = h + "</tbody></table></div>" +
+    (lista.length > 600 ? '<p class="sub" style="margin-top:10px">Se muestran los primeros 600 de '+fmtInt(lista.length)+". Usa el CSV para verlos todos.</p>" : "");
 }
-
-async function cargarVencimientos(){
-  const cont = $("#senVenc");
-  try {
-    const dias = Number($("#venDias").value) || 30;
-    const w = "nit_entidad in(" + state.nits.map(n=>"'"+n+"'").join(",") + ")"
-      + " AND fecha_de_fin_del_contrato >= '" + iso(hoy()) + "T00:00:00'"
-      + " AND fecha_de_fin_del_contrato <= '" + iso(masDias(hoy(), dias)) + "T23:59:59'";
-    const rows = await soql(DS_CONTRATOS, { "$select":SEL_CONTRATO, "$where":w, "$order":"fecha_de_fin_del_contrato ASC", "$limit":600 });
-    indexar(rows);
-    cont.innerHTML = rows.length
-      ? '<p class="sub">' + fmtInt(rows.length) + " contratos terminan en los próximos " + dias + " días.</p>" +
-        tablaContratos(rows, { flag: r => {
-          const d = Math.round((new Date(r.fecha_de_fin_del_contrato) - hoy())/86400000);
-          const cls = d <= 7 ? "crit" : d <= 21 ? "ser" : "warn";
-          return '<span class="flag '+cls+'">vence en '+d+" d</span>";
-        }})
-      : '<div class="empty">Ningún contrato vence en esa ventana.</div>';
-  } catch(e){ errBox(cont, e); }
-}
+document.addEventListener("click", e => {
+  const r = e.target.closest("[data-regla]"); if (!r) return;
+  banFiltro = banFiltro === r.dataset.regla ? null : r.dataset.regla;
+  $("#banSev").value = "1";
+  pintarBanderas();
+  $("#banTabla").scrollIntoView({ behavior:"smooth", block:"start" });
+});
+$("#banSev").addEventListener("change", pintarBanderas);
+$("#banTodas").addEventListener("click", () => { banFiltro = null; pintarBanderas(); });
 
 /* ============================================================
    CONTRATOS
@@ -869,63 +1118,57 @@ async function cargarContratos(){
       soql(DS_CONTRATOS, { "$select":"count(1) as n, sum(valor_del_contrato) as v, count(distinct documento_proveedor) as p",
                            "$where":whereContratos("valor_del_contrato < " + UMBRAL_IMPOSIBLE) })
     ]);
+    const ctx = construirContexto(rows);
+    for (const r of rows) r.__flags = evaluarContrato(r, ctx);
     cacheContratos = rows; indexar(rows);
-    const a = agg[0] || {};
-    const n = Number(a.n)||0, v = Number(a.v)||0, p = Number(a.p)||0;
+    const a = agg[0] || {}, n = +a.n||0, v = +a.v||0, p = +a.p||0;
     $("#conTiles").innerHTML =
       tile("Contratos en el filtro", fmtInt(n), "excluyendo valores imposibles") +
       tile("Valor contratado", fmtCOP(v), fmtPesos(v)) +
       tile("Contratistas distintos", fmtInt(p), n && p ? (n/p).toFixed(1) + " contratos por contratista" : "") +
       tile("Valor promedio", fmtCOP(n ? v/n : 0), "por contrato");
-    $("#conRange").textContent = "· mostrando " + fmtInt(rows.length) + " de " + fmtInt(n)
-      + (state.doc ? " · filtrado por un contratista concreto (pulsa Limpiar para quitarlo)" : "");
-    cont.innerHTML = tablaContratos(rows);
+    $("#conRange").textContent = "· mostrando " + fmtInt(rows.length) + " de " + fmtInt(n) +
+      (state.doc ? " · filtrado por un contratista concreto (pulsa Limpiar para quitarlo)" : "");
+    cont.innerHTML = tablaContratos(rows, { id:"contratos" });
     $("#moreCon").disabled = rows.length >= n;
   } catch(e){ errBox(cont, e); }
 }
 
 /* ============================================================
-   CONTRATISTAS REPETIDOS
+   CONTRATISTAS
    ============================================================ */
 async function cargarContratistas(){
   const cont = $("#cttaTabla");
   cont.innerHTML = '<div class="loading"><span class="spin"></span>Agrupando…</div>';
   try {
-    const min = Number($("#minCtr").value) || 3;
+    const min = +$("#minCtr").value || 3;
     const rows = await soql(DS_CONTRATOS, {
       "$select":"documento_proveedor, proveedor_adjudicado, tipodocproveedor, count(1) as n, sum(valor_del_contrato) as v, min(fecha_de_firma) as pri, max(fecha_de_firma) as ult",
       "$where": whereContratos("valor_del_contrato < " + UMBRAL_IMPOSIBLE),
       "$group":"documento_proveedor, proveedor_adjudicado, tipodocproveedor",
-      "$having":"count(1) >= " + min,
-      "$order":"n DESC, v DESC", "$limit":400
-    });
+      "$having":"count(1) >= " + min, "$order":"n DESC, v DESC", "$limit":400 });
     cacheCtta = rows;
     if (!rows.length){ cont.innerHTML = '<div class="empty">Nadie acumula '+min+' contratos o más con estos filtros.</div>'; return; }
     let h = '<div class="tw"><table><thead><tr><th></th><th>Contratista</th><th>Documento</th>'
           + '<th class="num">Contratos</th><th class="num">Valor total</th><th class="num">Promedio</th>'
           + '<th>Primero</th><th>Último</th><th></th></tr></thead><tbody>';
     for (const r of rows){
-      const n = Number(r.n), v = Number(r.v)||0;
-      h += "<tr>"
-        + "<td>" + starHTML("personas", r.documento_proveedor, r.proveedor_adjudicado) + "</td>"
-        + "<td>" + esc(r.proveedor_adjudicado||"—") + "</td>"
+      const n = +r.n, v = +r.v||0;
+      h += "<tr><td>" + starHTML("personas", r.documento_proveedor, r.proveedor_adjudicado) + "</td>"
+        + "<td>" + esc(r.proveedor_adjudicado||"—") + (n >= MIN_RECURRENTE ? ' <span class="tag alta">Recurrente</span>' : "") + "</td>"
         + '<td class="mono">' + esc(maskDoc(r.documento_proveedor, r.tipodocproveedor)) + "</td>"
         + '<td class="num"><b>' + fmtInt(n) + "</b></td>"
         + '<td class="num" title="'+fmtPesos(v)+'">' + fmtCOP(v) + "</td>"
         + '<td class="num">' + fmtCOP(v/n) + "</td>"
-        + '<td class="mono">' + fFecha(r.pri) + "</td>"
-        + '<td class="mono">' + fFecha(r.ult) + "</td>"
-        + '<td><button class="linkish" data-doc="'+esc(r.documento_proveedor)+'">Ver sus contratos</button></td>'
-        + "</tr>";
+        + '<td class="mono">' + fFecha(r.pri) + '</td><td class="mono">' + fFecha(r.ult) + "</td>"
+        + '<td><button class="linkish" data-doc="'+esc(r.documento_proveedor)+'">Ver sus contratos</button></td></tr>';
     }
     cont.innerHTML = h + "</tbody></table></div>";
   } catch(e){ errBox(cont, e); }
 }
 document.addEventListener("click", e => {
-  const b = e.target.closest("[data-doc]");
-  if (!b) return;
-  state.doc = b.dataset.doc;          // filtro exacto, fuera de la URL compartible
-  state.texto = ""; $("#fTexto").value = "";
+  const b = e.target.closest("[data-doc]"); if (!b) return;
+  state.doc = b.dataset.doc; state.texto = ""; $("#fTexto").value = "";
   irA("contratos"); cargarContratos(); sincronizarURL();
 });
 
@@ -938,108 +1181,117 @@ async function cargarProcesos(){
   try {
     const p = ["nit_entidad in(" + state.nits.map(n=>"'"+n+"'").join(",") + ")"];
     if (state.modalidad) p.push("modalidad_de_contratacion = '" + sq(state.modalidad) + "'");
-    if (state.texto) {
-      const t = sq(state.texto.toUpperCase());
-      p.push("(upper(descripci_n_del_procedimiento) like '%"+t+"%' OR upper(referencia_del_proceso) like '%"+t+"%')");
-    }
+    if (state.texto) { const t = sq(state.texto.toUpperCase());
+      p.push("(upper(descripci_n_del_procedimiento) like '%"+t+"%' OR upper(referencia_del_proceso) like '%"+t+"%')"); }
     if (state.desde) p.push("fecha_de_publicacion_del >= '" + state.desde + "T00:00:00'");
     if (state.hasta) p.push("fecha_de_publicacion_del <= '" + state.hasta + "T23:59:59'");
-    const rows = await soql(DS_PROCESOS, {
-      "$select":SEL_PROCESO, "$where": p.join(" AND "), "$order":"fecha_de_publicacion_del DESC", "$limit":500
-    });
+    const rows = await soql(DS_PROCESOS, { "$select":SEL_PROCESO, "$where":p.join(" AND "), "$order":"fecha_de_publicacion_del DESC", "$limit":600 });
+    for (const r of rows) r.__flags = evaluarProceso(r);
     cacheProc = rows;
-    if (!rows.length){ cont.innerHTML = '<div class="empty">Sin procesos con estos filtros.</div>'; return; }
     cont.innerHTML = tablaProcesos(rows);
   } catch(e){ errBox(cont, e); }
 }
 
-const SEL_PROCESO = "entidad,nit_entidad,referencia_del_proceso,descripci_n_del_procedimiento,precio_base," +
-  "modalidad_de_contratacion,estado_del_procedimiento,adjudicado,nombre_del_proveedor,valor_total_adjudicacion," +
-  "proveedores_invitados,respuestas_al_procedimiento,tipo_de_contrato,urlproceso,fase,fecha_de_publicacion_del,fecha_adjudicacion";
+/* ============================================================
+   VENCIMIENTOS Y MODALIDADES
+   ============================================================ */
+async function cargarVencimientos(){
+  const cont = $("#senVenc");
+  try {
+    const dias = +$("#venDias").value || 30;
+    const w = "nit_entidad in(" + state.nits.map(n=>"'"+n+"'").join(",") + ")"
+      + " AND fecha_de_fin_del_contrato >= '" + iso(hoy()) + "T00:00:00'"
+      + " AND fecha_de_fin_del_contrato <= '" + iso(masDias(hoy(), dias)) + "T23:59:59'";
+    const rows = await soql(DS_CONTRATOS, { "$select":SEL_CONTRATO, "$where":w, "$order":"fecha_de_fin_del_contrato ASC", "$limit":600 });
+    const ctx = construirContexto(rows);
+    for (const r of rows) r.__flags = evaluarContrato(r, ctx);
+    cacheVenc = rows; indexar(rows);
+    cont.innerHTML = rows.length
+      ? '<p class="sub">' + fmtInt(rows.length) + " contratos terminan en los próximos " + dias + " días.</p>" +
+        tablaContratos(rows, { id:"vencimientos", senal:true })
+      : '<div class="empty">Ningún contrato vence en esa ventana.</div>';
+  } catch(e){ errBox(cont, e); }
+}
 
-// La referencia del proceso viene con la fase pegada entre paréntesis.
-// Se recorta para que todas las fases de un mismo proceso compartan clave.
-const refBase = r => String(r.referencia_del_proceso || "").replace(/\s*\(.*$/, "").trim();
-
-function tablaProcesos(rows){
-  let h = '<div class="tw"><table><thead><tr><th></th><th>Entidad</th><th>Proceso</th><th>Fase</th>'
-        + '<th>Publicado</th><th class="num">Precio base</th><th>Estado</th>'
-        + '<th class="num">Invitados / Respuestas</th><th>Adjudicado a</th><th>Objeto</th><th></th></tr></thead><tbody>';
-  for (const r of rows){
-    const inv = Number(r.proveedores_invitados)||0, res = Number(r.respuestas_al_procedimiento)||0;
-    const ref = refBase(r);
-    const adj = r.adjudicado === "Si";
-    const base = Number(r.precio_base)||0, dado = Number(r.valor_total_adjudicacion)||0;
-    const pct = adj && base > 0 ? (dado/base*100) : null;
-    let comp = inv + " / " + res;
-    if (res > 0 && res <= 1) comp = '<span class="flag ser">' + comp + "</span>";
-    else if (res > 1) comp = '<span class="flag ok">' + comp + "</span>";
-    h += "<tr>"
-      + "<td>" + starHTML("procesos", ref, ref + " — " + (r.descripci_n_del_procedimiento||"").slice(0,80)) + "</td>"
-      + "<td>" + esc(NIT2NOM[r.nit_entidad] || r.entidad || "—") + "</td>"
-      + '<td class="mono">' + esc(ref || "—") + "</td>"
-      + "<td>" + esc(r.fase || "—") + "</td>"
-      + '<td class="mono">' + fFecha(r.fecha_de_publicacion_del) + "</td>"
-      + '<td class="num" title="'+fmtPesos(base)+'">' + fmtCOP(base) + "</td>"
-      + "<td>" + esc(r.estado_del_procedimiento||"—") + "</td>"
-      + '<td class="num">' + comp + "</td>"
-      + "<td>" + (adj
-          ? esc(r.nombre_del_proveedor||"—") + '<br><span style="color:var(--ink-muted);font-size:11.5px">'
-            + fmtCOP(dado) + (pct !== null ? " · " + pct.toFixed(1) + "% del base" : "") + "</span>"
-          : '<span style="color:var(--ink-muted)">No adjudicado</span>') + "</td>"
-      + '<td class="obj"><div class="o">' + esc(r.descripci_n_del_procedimiento||"—") + "</div></td>"
-      + "<td>" + (r.urlproceso?.url ? '<a href="'+esc(r.urlproceso.url)+'" target="_blank" rel="noopener">SECOP</a>' : "") + "</td>"
-      + "</tr>";
-  }
-  return h + "</tbody></table></div>";
+async function cargarModalidades(){
+  const cont = $("#senModal");
+  try {
+    const rows = await soql(DS_CONTRATOS, {
+      "$select":"modalidad_de_contratacion, count(1) as n, sum(valor_del_contrato) as v",
+      "$where": whereContratos("valor_del_contrato < " + UMBRAL_IMPOSIBLE),
+      "$group":"modalidad_de_contratacion", "$order":"n DESC", "$limit":60 });
+    const tot = rows.reduce((a,r)=>a+ +r.n, 0), totV = rows.reduce((a,r)=>a+(+r.v||0), 0);
+    if (!tot){ cont.innerHTML = '<div class="empty">Sin datos.</div>'; return; }
+    let h = '<div class="tw"><table><thead><tr><th>Modalidad</th><th class="num">Contratos</th><th class="num">% de los contratos</th><th class="num">Valor</th><th class="num">% del valor</th></tr></thead><tbody>';
+    for (const r of rows){
+      const p = +r.n/tot, pv = totV ? (+r.v||0)/totV : 0;
+      h += "<tr><td>"+esc(r.modalidad_de_contratacion||"—")+'</td><td class="num">'+fmtInt(r.n)+'</td>'
+        + '<td class="num">'+(p*100).toFixed(1)+'%</td><td class="num" title="'+fmtPesos(r.v)+'">'+fmtCOP(r.v)+'</td>'
+        + '<td class="num">'+(pv*100).toFixed(1)+"%</td></tr>";
+    }
+    const dir = rows.filter(r => (r.modalidad_de_contratacion||"").toLowerCase().includes("directa"));
+    const nDir = dir.reduce((a,r)=>a+ +r.n, 0);
+    cont.innerHTML = '<div class="tiles">'+tile("Contratación directa", (nDir/tot*100).toFixed(1)+"%",
+        fmtInt(nDir)+" de "+fmtInt(tot)+" contratos", nDir/tot)+"</div>" + h + "</tbody></table></div>" +
+      '<p class="sub" style="margin-top:12px">Un porcentaje alto de contratación directa no es por sí solo una irregularidad: la prestación de servicios profesionales se adjudica legalmente así. Lo que sí dice algo es la tendencia en el tiempo y qué se está adjudicando por esa vía.</p>';
+  } catch(e){ errBox(cont, e); }
 }
 
 /* ============================================================
    SEGUIMIENTO
    ============================================================ */
 async function renderSeguimiento(){
-  const docs = Object.entries(watch.personas), cons = Object.entries(watch.contratos);
-  const procs = Object.keys(watch.procesos);
+  const docs = Object.entries(watch.personas), cons = Object.entries(watch.contratos), procs = Object.keys(watch.procesos);
   $("#cSeg").textContent = docs.length + cons.length + procs.length;
-
-  // Estado en vivo de los procesos vigilados
   const box = $("#segProc");
   if (procs.length){
-    box.innerHTML = "<h3 style='font-size:13px;margin:0 0 8px'>Procesos vigilados</h3>" +
-                    '<div class="loading"><span class="spin"></span>Consultando el estado actual en SECOP…</div>';
+    box.innerHTML = "<h3>Procesos vigilados</h3><div class='loading'><span class='spin'></span>Consultando el estado actual en SECOP…</div>";
     try {
       const w = procs.map(p => "referencia_del_proceso like '" + sq(p) + "%'").join(" OR ");
       const rows = await soql(DS_PROCESOS, { "$select":SEL_PROCESO, "$where":"("+w+")", "$order":"fecha_de_publicacion_del ASC", "$limit":200 });
-      box.innerHTML = "<h3 style='font-size:13px;margin:0 0 8px'>Procesos vigilados</h3>" +
-        (rows.length ? tablaProcesos(rows)
-                     : '<div class="empty">Los procesos marcados no aparecen hoy en SECOP con esa referencia.</div>');
+      for (const r of rows) r.__flags = evaluarProceso(r);
+      box.innerHTML = "<h3>Procesos vigilados</h3>" + (rows.length ? tablaProcesos(rows)
+        : '<div class="empty">Los procesos marcados no aparecen hoy en SECOP con esa referencia.</div>');
     } catch(e){ errBox(box, e); }
-  } else {
-    box.innerHTML = '<div class="empty">Ningún proceso marcado todavía.</div>';
-  }
+  } else box.innerHTML = '<div class="empty">Ningún proceso marcado todavía.</div>';
 
   $("#segCtta").innerHTML = docs.length
-    ? "<h3 style='font-size:13px;margin:0 0 8px'>Contratistas vigilados</h3><div class='tw'><table><thead><tr><th></th><th>Contratista</th><th>Documento</th><th></th></tr></thead><tbody>"
+    ? "<h3>Contratistas vigilados</h3><div class='tw'><table><thead><tr><th></th><th>Contratista</th><th>Documento</th><th></th></tr></thead><tbody>"
       + docs.map(([d,o]) => "<tr><td>"+starHTML("personas",d,o.label)+"</td><td>"+esc(o.label||"—")+"</td>"
         + '<td class="mono">'+esc(maskDoc(d, d.length<=10 ? "Cédula" : "NIT"))+'</td>'
-        + '<td><button class="linkish" data-doc="'+esc(d)+'">Ver sus contratos</button></td></tr>').join("")
-      + "</tbody></table></div>"
+        + '<td><button class="linkish" data-doc="'+esc(d)+'">Ver sus contratos</button></td></tr>').join("") + "</tbody></table></div>"
     : '<div class="empty">Ningún contratista marcado todavía.</div>';
   $("#segCon").innerHTML = cons.length
-    ? "<h3 style='font-size:13px;margin:0 0 8px'>Contratos vigilados</h3><div class='tw'><table><thead><tr><th></th><th>Contrato</th><th></th></tr></thead><tbody>"
+    ? "<h3>Contratos vigilados</h3><div class='tw'><table><thead><tr><th></th><th>Contrato</th><th></th></tr></thead><tbody>"
       + cons.map(([id,o]) => "<tr><td>"+starHTML("contratos",id,o.label)+"</td><td>"+esc(o.label||id)+"</td>"
-        + '<td><button class="linkish" data-ficha="'+esc(id)+'">Ficha</button></td></tr>').join("")
-      + "</tbody></table></div>"
+        + '<td><button class="linkish" data-ficha="'+esc(id)+'">Ficha</button></td></tr>').join("") + "</tbody></table></div>"
     : '<div class="empty">Ningún contrato marcado todavía.</div>';
 }
 
 /* ============================================================
-   Interfaz: filtros, pestañas, URL
+   METODOLOGÍA
+   ============================================================ */
+function renderMetodologia(){
+  $("#metReglas").innerHTML = REGLAS.slice().sort((a,b) => b.sev - a.sev).map(r =>
+    '<div class="regla"><h4><span class="flag '+SEV[r.sev].clase+'">'+SEV[r.sev].nombre+"</span> "+esc(r.nombre)+"</h4>"+
+    '<div class="meta">'+(r.ambito === "contrato" ? "Se aplica a contratos" : "Se aplica a procesos")+" · Fuente: "+esc(r.fuente)+"</div>"+
+    "<p><b>Qué detecta.</b> "+esc(r.que)+"</p><p><b>Por qué importa.</b> "+esc(r.porque)+"</p></div>").join("");
+  $("#metLimites").innerHTML = [
+    ["Esto no prueba corrupción", "Todas las reglas de este monitor son indicios estadísticos y de consistencia del registro. Un contrato marcado puede ser perfectamente legal y bien ejecutado. Lo único que dice una bandera es que vale la pena abrir el expediente."],
+    ["No se ven las ofertas perdedoras", "El catálogo internacional del que salen estas reglas incluye señales de colusión que exigen comparar las ofertas que perdieron: precios idénticos, múltiplos fijos, rotación de ganadores. SECOP II no publica ese detalle en los datos abiertos, así que esas reglas no se pueden calcular aquí."],
+    ["No se ve quién está detrás de las empresas", "Detectar que dos oferentes comparten dueño requiere datos de beneficiarios finales que no están en SECOP. Esa verificación hay que hacerla a mano, en el registro mercantil."],
+    ["No se leen los pliegos", "El objeto acomodado y los requisitos hechos a la medida solo se detectan leyendo los documentos del proceso. El monitor puede decirte a qué proceso mirar, no leerlo por ti."],
+    ["Los datos son los que reportó la entidad", "Nada de esto está auditado. El monitor mide lo que la ESAP dijo que hizo. Cuando el propio dato es imposible, lo marca en lugar de corregirlo, porque el error de reporte también es información."],
+    ["El periodo consultado cambia los resultados", "Las reglas de contexto (atípico, recurrente, fraccionamiento) se calculan sobre el rango de fechas que tengas puesto arriba. Si cambias el rango, cambian los promedios y por tanto cambia qué se marca."]
+  ].map(([t,d]) => '<div class="regla"><h4>'+esc(t)+"</h4><p>"+esc(d)+"</p></div>").join("");
+}
+
+/* ============================================================
+   Interfaz
    ============================================================ */
 function pintarChips(){
   $("#entChips").innerHTML = ENTIDADES.map(e =>
-    '<button class="chip" type="button" data-nit="'+e.nit+'" aria-pressed="'+state.nits.includes(e.nit)+'" title="NIT '+e.nit+'">'+esc(e.corto)+"</button>"
-  ).join("");
+    '<button class="chip" type="button" data-nit="'+e.nit+'" aria-pressed="'+state.nits.includes(e.nit)+'" title="NIT '+e.nit+'">'+esc(e.corto)+"</button>").join("");
   $("#entCount").textContent = "· " + state.nits.length + " de " + ENTIDADES.length + " seleccionadas";
 }
 $("#entChips").addEventListener("click", e => {
@@ -1051,36 +1303,32 @@ $("#entChips").addEventListener("click", e => {
 });
 $$("[data-ent]").forEach(b => b.addEventListener("click", () => {
   const m = b.dataset.ent;
-  state.nits = m === "all" ? ENTIDADES.map(e=>e.nit) : m === "central" ? ["899999054"] : ["899999054"];
+  state.nits = m === "all" ? ENTIDADES.map(e=>e.nit)
+             : m === "central" ? ["899999054"]
+             : ENTIDADES.filter(e => e.nit !== "899999054").map(e=>e.nit);
   pintarChips();
 }));
 
 async function llenarSelects(){
   try {
+    const nitsAll = "nit_entidad in(" + ENTIDADES.map(e=>"'"+e.nit+"'").join(",") + ")";
     const [mods, tipos] = await Promise.all([
-      soql(DS_CONTRATOS, { "$select":"modalidad_de_contratacion, count(1) as n",
-        "$where":"nit_entidad in(" + ENTIDADES.map(e=>"'"+e.nit+"'").join(",") + ")",
-        "$group":"modalidad_de_contratacion", "$order":"n DESC", "$limit":60 }),
-      soql(DS_CONTRATOS, { "$select":"tipo_de_contrato, count(1) as n",
-        "$where":"nit_entidad in(" + ENTIDADES.map(e=>"'"+e.nit+"'").join(",") + ")",
-        "$group":"tipo_de_contrato", "$order":"n DESC", "$limit":60 })
+      soql(DS_CONTRATOS, { "$select":"modalidad_de_contratacion, count(1) as n", "$where":nitsAll, "$group":"modalidad_de_contratacion", "$order":"n DESC", "$limit":60 }),
+      soql(DS_CONTRATOS, { "$select":"tipo_de_contrato, count(1) as n", "$where":nitsAll, "$group":"tipo_de_contrato", "$order":"n DESC", "$limit":60 })
     ]);
     for (const m of mods) if (m.modalidad_de_contratacion)
       $("#fModalidad").insertAdjacentHTML("beforeend", '<option value="'+esc(m.modalidad_de_contratacion)+'">'+esc(m.modalidad_de_contratacion)+" ("+fmtInt(m.n)+")</option>");
     for (const t of tipos) if (t.tipo_de_contrato)
       $("#fTipo").insertAdjacentHTML("beforeend", '<option value="'+esc(t.tipo_de_contrato)+'">'+esc(t.tipo_de_contrato)+" ("+fmtInt(t.n)+")</option>");
     $("#fModalidad").value = state.modalidad; $("#fTipo").value = state.tipo;
-  } catch(e){ /* los selects quedan en "Todas"; no es bloqueante */ }
+  } catch(e){}
 }
 
 function leerFiltros(){
-  state.desde = $("#fDesde").value;
-  state.hasta = $("#fHasta").value;
-  state.modalidad = $("#fModalidad").value;
-  state.tipo = $("#fTipo").value;
-  state.texto = $("#fTexto").value.trim();
-  state.doc = "";
-  state.limCon = 500;
+  state.desde = $("#fDesde").value; state.hasta = $("#fHasta").value;
+  state.modalidad = $("#fModalidad").value; state.tipo = $("#fTipo").value;
+  state.texto = $("#fTexto").value.trim(); state.doc = ""; state.limCon = 500;
+  lsSet(LS.filtros, { nits: state.nits, desde: state.desde, hasta: state.hasta, modalidad: state.modalidad, tipo: state.tipo });
 }
 function escribirFiltros(){
   $("#fDesde").value = state.desde; $("#fHasta").value = state.hasta;
@@ -1098,6 +1346,9 @@ function sincronizarURL(){
   history.replaceState(null, "", location.pathname + "#" + p.toString());
 }
 function leerURL(){
+  const g = lsGet(LS.filtros, null);
+  if (g){ if (g.nits?.length) state.nits = g.nits; if (g.desde) state.desde = g.desde;
+          if (g.hasta) state.hasta = g.hasta; state.modalidad = g.modalidad||""; state.tipo = g.tipo||""; }
   const p = new URLSearchParams(location.hash.slice(1));
   if (p.get("e")) state.nits = p.get("e").split(",").filter(n => NIT2NOM[n]);
   if (!state.nits.length) state.nits = ENTIDADES.map(e=>e.nit);
@@ -1111,25 +1362,25 @@ function leerURL(){
 
 let tabActual = "novedades";
 const cargadas = new Set();
+const CARGA = { banderas:cargarBanderas, contratos:cargarContratos, contratistas:cargarContratistas,
+  procesos:cargarProcesos, vencimientos:() => { cargarVencimientos(); cargarModalidades(); },
+  seguimiento:renderSeguimiento, metodologia:renderMetodologia, novedades:()=>{} };
 function irA(tab){
   tabActual = tab;
   $$("nav.tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === tab));
   $$(".panel").forEach(p => p.classList.toggle("on", p.id === "p-"+tab));
   sincronizarURL();
   if (cargadas.has(tab)) return;
-  cargadas.add(tab);
-  ({ senales:cargarSenales, contratos:cargarContratos, contratistas:cargarContratistas,
-     procesos:cargarProcesos, seguimiento:renderSeguimiento, novedades:()=>{} })[tab]?.();
+  cargadas.add(tab); CARGA[tab]?.();
 }
 $$("nav.tabs button").forEach(b => b.addEventListener("click", () => irA(b.dataset.tab)));
 
 $("#applyBtn").addEventListener("click", () => {
-  leerFiltros(); sincronizarURL(); cargadas.clear(); cargadas.add(tabActual);
+  leerFiltros(); sincronizarURL();
+  cargadas.clear(); cargadas.add(tabActual); cargadas.add("metodologia");
+  renderMetodologia();
   cargarNovedades();
-  if (tabActual === "senales") cargarSenales();
-  if (tabActual === "contratos") cargarContratos();
-  if (tabActual === "contratistas") cargarContratistas();
-  if (tabActual === "procesos") cargarProcesos();
+  CARGA[tabActual]?.();
 });
 $("#resetBtn").addEventListener("click", () => {
   state.nits = ENTIDADES.map(e=>e.nit);
@@ -1143,12 +1394,36 @@ $("#minCtr").addEventListener("change", cargarContratistas);
 $("#moreCon").addEventListener("click", () => { state.limCon += 500; cargarContratos(); });
 
 $("#csvCon").addEventListener("click", () => downloadCSV("contratos-esap.csv", toCSV(cacheContratos, COLS_CONTRATO)));
+$("#csvNov").addEventListener("click", () => downloadCSV("novedades-esap.csv", toCSV(cacheNov, COLS_CONTRATO)));
+$("#csvVenc").addEventListener("click", () => downloadCSV("vencimientos-esap.csv", toCSV(cacheVenc, COLS_CONTRATO)));
+$("#csvBan").addEventListener("click", () => {
+  const min = +$("#banSev").value || 1;
+  let lista = banderas.filter(b => b.reglas[0].sev >= min);
+  if (banFiltro) lista = lista.filter(b => b.reglas.some(r => r.id === banFiltro));
+  downloadCSV("banderas-rojas-esap.csv", toCSV(lista, [
+    {t:"Severidad", f:b => SEV[b.reglas[0].sev].nombre},
+    {t:"Tipo", f:b => b.tipo === "contrato" ? "Contrato" : "Proceso"},
+    {t:"Entidad", f:b => NIT2NOM[b.item.nit_entidad] || b.item.nit_entidad},
+    {t:"Referencia", f:b => b.tipo === "contrato" ? b.item.referencia_del_contrato : refBase(b.item)},
+    {t:"Fecha", f:b => (b.item.fecha_de_firma || b.item.fecha_de_publicacion_del || "").slice(0,10)},
+    {t:"Contratista o proveedor", f:b => b.tipo === "contrato" ? b.item.proveedor_adjudicado : b.item.nombre_del_proveedor},
+    {t:"Documento", f:b => b.tipo === "contrato" ? maskDoc(b.item.documento_proveedor, b.item.tipodocproveedor) : ""},
+    {t:"Valor", f:b => b.tipo === "contrato" ? b.item.valor_del_contrato : b.item.precio_base},
+    {t:"Banderas", f:b => b.reglas.map(r => r.nombre).join(" | ")},
+    {t:"Qué detecta", f:b => b.reglas.map(r => r.que).join(" ")},
+    {t:"Fuente de la regla", f:b => b.reglas.map(r => r.fuente).join(" | ")},
+    {t:"Objeto", f:b => b.item.objeto_del_contrato || b.item.descripci_n_del_procedimiento || ""},
+    {t:"Expediente SECOP", f:b => b.item.urlproceso?.url || ""}
+  ]));
+});
 $("#csvProc").addEventListener("click", () => downloadCSV("procesos-esap.csv", toCSV(cacheProc, [
-  {t:"Entidad",f:r=>NIT2NOM[r.nit_entidad]||r.entidad},{t:"Referencia",f:"referencia_del_proceso"},
+  {t:"Entidad",f:r=>NIT2NOM[r.nit_entidad]||r.entidad},{t:"Referencia",f:r=>refBase(r)},{t:"Fase",f:"fase"},
+  {t:"Publicado",f:r=>(r.fecha_de_publicacion_del||"").slice(0,10)},
   {t:"Precio base",f:"precio_base"},{t:"Modalidad",f:"modalidad_de_contratacion"},
   {t:"Estado",f:"estado_del_procedimiento"},{t:"Adjudicado",f:"adjudicado"},
   {t:"Proveedor",f:"nombre_del_proveedor"},{t:"Valor adjudicado",f:"valor_total_adjudicacion"},
   {t:"Invitados",f:"proveedores_invitados"},{t:"Respuestas",f:"respuestas_al_procedimiento"},
+  {t:"Banderas rojas",f:r=>(r.__flags||[]).map(f=>f.nombre).join(" | ")},
   {t:"Objeto",f:"descripci_n_del_procedimiento"},{t:"Expediente",f:r=>r.urlproceso?.url||""}
 ])));
 $("#csvCtta").addEventListener("click", () => downloadCSV("contratistas-esap.csv", toCSV(cacheCtta, [
@@ -1158,9 +1433,9 @@ $("#csvCtta").addEventListener("click", () => downloadCSV("contratistas-esap.csv
 ])));
 $("#csvSeg").addEventListener("click", () => {
   const rows = [
-    ...Object.entries(watch.procesos ).map(([d,o]) => ({tipo:"Proceso",     id:d, label:o.label})),
+    ...Object.entries(watch.procesos ).map(([d,o]) => ({tipo:"Proceso", id:d, label:o.label})),
     ...Object.entries(watch.personas ).map(([d,o]) => ({tipo:"Contratista", id:d, label:o.label})),
-    ...Object.entries(watch.contratos).map(([d,o]) => ({tipo:"Contrato",    id:d, label:o.label}))
+    ...Object.entries(watch.contratos).map(([d,o]) => ({tipo:"Contrato", id:d, label:o.label}))
   ];
   downloadCSV("seguimiento-esap.csv", toCSV(rows, [{t:"Tipo",f:"tipo"},{t:"Identificador",f:"id"},{t:"Descripción",f:"label"}]));
 });
@@ -1173,7 +1448,7 @@ $("#shareBtn").addEventListener("click", async () => {
   sincronizarURL();
   try { await navigator.clipboard.writeText(location.href); $("#shareBtn").textContent = "Enlace copiado"; }
   catch(e){ prompt("Copia este enlace:", location.href); }
-  setTimeout(() => $("#shareBtn").textContent = "Copiar enlace de esta vista", 2200);
+  setTimeout(() => $("#shareBtn").textContent = "Copiar enlace", 2200);
 });
 $("#themeBtn").addEventListener("click", () => {
   const cur = document.documentElement.getAttribute("data-theme");
@@ -1195,6 +1470,7 @@ $("#themeBtn").addEventListener("click", () => {
   $("#freshness").textContent = "Consultado " + new Date().toLocaleString("es-CO");
   llenarSelects();
   renderSeguimiento();
+  renderMetodologia(); cargadas.add("metodologia");
   cargarNovedades();
   if (tab !== "novedades") irA(tab); else sincronizarURL();
 })();
