@@ -197,6 +197,7 @@ footer.foot{border-top:1px solid var(--ring);margin-top:36px;padding-top:16px;co
     <button role="tab" data-tab="banderas" aria-selected="false">Banderas rojas <span class="cnt" id="cBan">—</span></button>
     <button role="tab" data-tab="contratos" aria-selected="false">Contratos</button>
     <button role="tab" data-tab="contratistas" aria-selected="false">Contratistas</button>
+    <button role="tab" data-tab="contratista" aria-selected="false">Buscar contratista</button>
     <button role="tab" data-tab="procesos" aria-selected="false">Procesos</button>
     <button role="tab" data-tab="vencimientos" aria-selected="false">Vencimientos</button>
     <button role="tab" data-tab="seguimiento" aria-selected="false">Seguimiento <span class="cnt" id="cSeg">0</span></button>
@@ -275,6 +276,20 @@ footer.foot{border-top:1px solid var(--ring);margin-top:36px;padding-top:16px;co
       </div>
       <div id="cttaTabla"><div class="loading"><span class="spin"></span>Agrupando…</div></div>
     </div>
+  </section>
+
+  <!-- ============ PERFIL DE CONTRATISTA ============ -->
+  <section class="panel" id="p-contratista" role="tabpanel">
+    <div class="card">
+      <h2>Buscar un contratista</h2>
+      <p class="sub">Escribe un nombre, parte de un nombre, o el número de documento. La búsqueda recorre las dieciséis cuentas de la ESAP y todo el histórico del SECOP, sin importar el rango de fechas que tengas puesto arriba: la idea es ver la trayectoria completa de esa persona o empresa con la entidad.</p>
+      <div class="f-actions" style="margin-bottom:12px;align-items:center">
+        <input type="search" id="qCtta" placeholder="p. ej. Heimcore, Cafam, 900425697" style="flex:1;min-width:240px;background:var(--plane);color:var(--ink);border:1px solid var(--ring);border-radius:8px;padding:8px 10px;font:inherit;font-size:13.5px">
+        <button class="btn" id="buscarCtta" type="button">Buscar</button>
+      </div>
+      <div id="cttaResultados"></div>
+    </div>
+    <div id="cttaPerfil"></div>
   </section>
 
   <!-- ============ PROCESOS ============ -->
@@ -823,7 +838,7 @@ function tablaContratos(rows, opts = {}){
       + "<td>" + esc(NIT2NOM[r.nit_entidad] || r.nit_entidad) + "</td>"
       + '<td class="mono">' + esc(r.referencia_del_contrato || "—") + "</td>"
       + '<td class="mono">' + fFecha(r.fecha_de_firma) + "</td>"
-      + "<td>" + esc(r.proveedor_adjudicado || "—")
+      + "<td>" + nombreCtta(r)
         + '<br><span style="color:var(--ink-muted);font-size:11.5px" class="mono">' + esc(maskDoc(r.documento_proveedor, r.tipodocproveedor)) + "</span></td>"
       + '<td class="num" title="' + fmtPesos(val) + '">' + fmtCOP(val) + "</td>"
       + "<td>" + esc(r.modalidad_de_contratacion || "—") + "</td>"
@@ -1170,7 +1185,7 @@ async function cargarContratistas(){
         + '<td class="num" title="'+fmtPesos(v)+'">' + fmtCOP(v) + "</td>"
         + '<td class="num">' + fmtCOP(v/n) + "</td>"
         + '<td class="mono">' + fFecha(r.pri) + '</td><td class="mono">' + fFecha(r.ult) + "</td>"
-        + '<td><button class="linkish" data-doc="'+esc(r.documento_proveedor)+'">Ver sus contratos</button></td></tr>';
+        + '<td><button class="linkish" data-perfil="'+esc(r.documento_proveedor)+'" data-nom="'+esc(r.proveedor_adjudicado||"")+'">Ver su ficha</button></td></tr>';
     }
     cont.innerHTML = h + "</tbody></table></div>";
   } catch(e){ errBox(cont, e); }
@@ -1295,6 +1310,179 @@ function renderMetodologia(){
   ].map(([t,d]) => '<div class="regla"><h4>'+esc(t)+"</h4><p>"+esc(d)+"</p></div>").join("");
 }
 
+
+/* ============================================================
+   PERFIL DE CONTRATISTA
+   ------------------------------------------------------------
+   Recorre las dieciséis cuentas y todo el histórico del SECOP,
+   al margen del rango de fechas de los filtros de arriba: lo que
+   interesa aquí es la trayectoria completa del contratista.
+   ============================================================ */
+const NITS_TODOS = () => "nit_entidad in(" + ENTIDADES.map(e=>"'"+e.nit+"'").join(",") + ")";
+
+function nombreCtta(r){
+  const n = esc(r.proveedor_adjudicado || "—");
+  const d = r.documento_proveedor;
+  if (!d || d.toLowerCase() === "no definido") return n;
+  return '<button class="linkish" data-perfil="'+esc(d)+'" data-nom="'+esc(r.proveedor_adjudicado||"")+'" title="Ver la ficha completa de este contratista">'+n+"</button>";
+}
+
+async function buscarContratistas(q){
+  const cont = $("#cttaResultados");
+  q = (q || "").trim();
+  if (q.length < 3){ cont.innerHTML = '<div class="note">Escribe al menos tres caracteres.</div>'; return; }
+  cont.innerHTML = '<div class="loading"><span class="spin"></span>Buscando en las dieciséis cuentas…</div>';
+  try {
+    const t = sq(q.toUpperCase());
+    const w = NITS_TODOS() + " AND (upper(proveedor_adjudicado) like '%"+t+"%' OR documento_proveedor = '"+sq(q)+"')";
+    const rows = await soql(DS_CONTRATOS, {
+      "$select":"documento_proveedor, proveedor_adjudicado, tipodocproveedor, count(1) as n, sum(valor_del_contrato) as v, min(fecha_de_firma) as pri, max(fecha_de_firma) as ult",
+      "$where": w + " AND valor_del_contrato < " + UMBRAL_IMPOSIBLE,
+      "$group":"documento_proveedor, proveedor_adjudicado, tipodocproveedor",
+      "$order":"n DESC", "$limit":40 });
+    if (!rows.length){ cont.innerHTML = '<div class="empty">Nadie con ese nombre o documento contrató con la ESAP según SECOP II.</div>'; return; }
+    let h = '<p class="sub">'+fmtInt(rows.length)+" resultado"+(rows.length===1?"":"s")+". Haz clic en el que busques.</p>"+
+      '<div class="tw"><table><thead><tr><th>Contratista</th><th>Documento</th><th class="num">Contratos</th><th class="num">Valor total</th><th>Primero</th><th>Último</th></tr></thead><tbody>';
+    for (const r of rows){
+      h += '<tr style="cursor:pointer" data-perfil="'+esc(r.documento_proveedor)+'" data-nom="'+esc(r.proveedor_adjudicado||"")+'">'
+        + "<td><b>" + esc(r.proveedor_adjudicado||"—") + "</b></td>"
+        + '<td class="mono">' + esc(maskDoc(r.documento_proveedor, r.tipodocproveedor)) + "</td>"
+        + '<td class="num">' + fmtInt(r.n) + '</td><td class="num">' + fmtCOP(r.v) + "</td>"
+        + '<td class="mono">' + fFecha(r.pri) + '</td><td class="mono">' + fFecha(r.ult) + "</td></tr>";
+    }
+    cont.innerHTML = h + "</tbody></table></div>";
+    if (rows.length === 1) abrirPerfil(rows[0].documento_proveedor, rows[0].proveedor_adjudicado);
+  } catch(e){ errBox(cont, e); }
+}
+
+async function abrirPerfil(doc, nombre){
+  const cont = $("#cttaPerfil");
+  cont.innerHTML = '<div class="card"><div class="loading"><span class="spin"></span>Armando la ficha de '+esc(nombre||doc)+"…</div></div>";
+  try {
+    const w = NITS_TODOS() + " AND documento_proveedor = '" + sq(doc) + "'";
+    const [contratos, porAnio] = await Promise.all([
+      soql(DS_CONTRATOS, { "$select":SEL_CONTRATO, "$where":w, "$order":"fecha_de_firma DESC", "$limit":1000 }),
+      soql(DS_CONTRATOS, { "$select":"date_extract_y(fecha_de_firma) as a, count(1) as n, sum(valor_del_contrato) as v",
+        "$where": w + " AND valor_del_contrato < " + UMBRAL_IMPOSIBLE + " AND fecha_de_firma IS NOT NULL",
+        "$group":"a", "$order":"a", "$limit":30 })
+    ]);
+    if (!contratos.length){ cont.innerHTML = '<div class="card"><div class="empty">Sin contratos para ese documento.</div></div>'; return; }
+
+    const ctx = construirContexto(contratos);
+    for (const c of contratos) c.__flags = evaluarContrato(c, ctx);
+    indexar(contratos);
+    cacheCttaPerfil = contratos;
+
+    const limpios = contratos.filter(c => (+c.valor_del_contrato||0) < UMBRAL_IMPOSIBLE);
+    const total   = limpios.reduce((a,c) => a + (+c.valor_del_contrato||0), 0);
+    const pagado  = limpios.reduce((a,c) => a + (+c.valor_pagado||0), 0);
+    const fechas  = contratos.map(c => c.fecha_de_firma).filter(Boolean).sort();
+    const primero = fechas[0], ultimo = fechas[fechas.length-1];
+    const anios   = primero ? ((new Date(ultimo) - new Date(primero)) / 31557600000) : 0;
+    const hoyISO  = iso(hoy());
+    const enCurso = contratos.filter(c => /en ejecuci|modificado/i.test(c.estado_contrato||"") &&
+                    (!c.fecha_de_fin_del_contrato || c.fecha_de_fin_del_contrato.slice(0,10) >= hoyISO));
+    const vencePronto = enCurso.filter(c => c.fecha_de_fin_del_contrato &&
+                    c.fecha_de_fin_del_contrato.slice(0,10) <= iso(masDias(hoy(), 60)));
+    const valorEnCurso = enCurso.reduce((a,c) => a + (+c.valor_del_contrato||0), 0);
+    const tipoDoc = contratos[0].tipodocproveedor || "";
+    const natural = esPersonaNatural(tipoDoc);
+
+    const cuenta = (campo) => {
+      const m = {}; for (const c of contratos){ const k = c[campo] || "—"; m[k] = (m[k]||0)+1; }
+      return Object.entries(m).sort((a,b) => b[1]-a[1]);
+    };
+    const sedes = cuenta("nit_entidad").map(([k,n]) => (NIT2NOM[k]||k) + " (" + n + ")");
+    const mods  = cuenta("modalidad_de_contratacion");
+    const tipos = cuenta("tipo_de_contrato");
+    const sups  = cuenta("nombre_supervisor").filter(([k]) => k && !/no definid/i.test(k));
+
+    const fl = {};
+    for (const c of contratos) for (const f of c.__flags) fl[f.id] = (fl[f.id]||0) + 1;
+    const flOrden = Object.entries(fl).map(([id,n]) => [REGLAS.find(r=>r.id===id), n])
+                    .filter(([r]) => r).sort((a,b) => b[0].sev - a[0].sev || b[1]-a[1]);
+
+    const ultimoCob = limpios.length ? Math.round(total/limpios.length) : 0;
+
+    cont.innerHTML =
+      '<div class="card"><h2>' + esc(nombre || contratos[0].proveedor_adjudicado || doc) + "</h2>" +
+      '<p class="sub">' + esc(tipoDoc || "Documento") + " " + esc(maskDoc(doc, tipoDoc)) + " · " +
+        (natural ? "persona natural" : "persona jurídica o entidad") + " · " +
+        starHTML("personas", doc, nombre || doc) + ' <span style="font-size:12px">marca la estrella para vigilarlo</span></p>' +
+
+      '<div class="tiles">' +
+        tile("Contratos con la ESAP", fmtInt(contratos.length), "en todo el histórico de SECOP II") +
+        tile("Valor total contratado", fmtCOP(total), fmtPesos(total)) +
+        tile("Contratos en curso", fmtInt(enCurso.length), enCurso.length ? fmtCOP(valorEnCurso) + " vigentes" : "ninguno vigente hoy",
+             undefined, enCurso.length ? "media" : "") +
+        tile("Contrata desde", fFecha(primero), anios >= 1 ? "hace " + anios.toFixed(1) + " años" : "menos de un año") +
+      "</div>" +
+
+      '<div class="tiles">' +
+        tile("Último contrato", fFecha(ultimo), "") +
+        tile("Valor promedio", fmtCOP(ultimoCob), "por contrato") +
+        tile("Reportado como pagado", fmtCOP(pagado), total ? (pagado/total*100).toFixed(1) + "% de lo contratado" : "", total ? Math.min(1, pagado/total) : 0) +
+        tile("Vencen en 60 días", fmtInt(vencePronto.length), vencePronto.length ? "pide informes de supervisión" : "ninguno",
+             undefined, vencePronto.length ? "alta" : "") +
+      "</div>" +
+
+      '<h3>Con qué sedes contrata</h3><p>' + esc(sedes.join(" · ")) + "</p>" +
+      '<h3>Por qué modalidad le adjudican</h3><p>' + esc(mods.map(([k,n]) => k+" ("+n+")").join(" · ")) + "</p>" +
+      '<h3>Qué tipo de contratos firma</h3><p>' + esc(tipos.map(([k,n]) => k+" ("+n+")").join(" · ")) + "</p>" +
+      (sups.length ? '<h3>Quién le ha supervisado</h3><p>' + esc(sups.slice(0,8).map(([k,n]) => k+" ("+n+")").join(" · ")) +
+        (sups.length > 8 ? " y " + (sups.length-8) + " más" : "") + "</p>" : "") +
+
+      (flOrden.length
+        ? '<h3>Banderas rojas acumuladas</h3><p class="sub">Contando todos sus contratos. Una bandera es un indicio, no una prueba.</p>' +
+          '<div class="tags" style="margin-bottom:10px">' + flOrden.map(([r,n]) =>
+            '<span class="tag '+SEV[r.sev].clase+'" title="'+esc(r.que)+'">'+esc(r.nombre)+" · "+n+"</span>").join("") + "</div>"
+        : '<h3>Banderas rojas acumuladas</h3><p>Ninguna de sus contratos activó una regla.</p>') +
+
+      '<h3>Contratos por año</h3><div id="cttaChart"></div>' +
+
+      '<div class="f-actions" style="margin-top:16px">' +
+        '<button class="btn-ghost" id="csvPerfil" type="button">Descargar CSV de sus contratos</button>' +
+        '<button class="btn-ghost" onclick="window.print()" type="button">Imprimir esta ficha</button>' +
+      "</div></div>" +
+
+      '<div class="card"><h2>Todos sus contratos <span style="font-weight:400;color:var(--ink-muted);font-size:12.5px">· ' +
+        fmtInt(contratos.length) + (contratos.length >= 1000 ? " (tope de mil)" : "") + "</span></h2>" +
+        tablaContratos(contratos, { id:"perfil", senal:true }) + "</div>";
+
+    barrasSimple($("#cttaChart"), porAnio.map(r => [r.a, +r.n]));
+    $("#csvPerfil").addEventListener("click", () => downloadCSV("contratista-" + doc + ".csv", toCSV(contratos, COLS_CONTRATO)));
+    cont.scrollIntoView({ behavior:"smooth", block:"start" });
+  } catch(e){ errBox(cont, e); }
+}
+let cacheCttaPerfil = [];
+
+function barrasSimple(wrap, pares){
+  if (!wrap) return;
+  if (!pares.length){ wrap.innerHTML = '<div class="empty">Sin contratos fechados.</div>'; return; }
+  const max = Math.max(...pares.map(p => p[1]));
+  const W=1000,H=150,padL=30,padR=8,padT=16,padB=24, iw=W-padL-padR, ih=H-padT-padB;
+  const bw = Math.max(6, iw/pares.length - 10);
+  let bars = "", ticks = "";
+  pares.forEach(([a,n],i) => {
+    const x = padL + i*(iw/pares.length) + (iw/pares.length - bw)/2;
+    const h = Math.max(2, (n/max)*ih), y = padT+ih-h;
+    bars += '<rect class="bar" x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+h.toFixed(1)+'" rx="4"/>';
+    bars += '<text x="'+(x+bw/2).toFixed(1)+'" y="'+(y-4).toFixed(1)+'" text-anchor="middle">'+n+"</text>";
+    ticks += '<text x="'+(x+bw/2).toFixed(1)+'" y="'+(H-6)+'" text-anchor="middle">'+a+"</text>";
+  });
+  wrap.innerHTML = '<svg class="chart" style="height:150px" viewBox="0 0 '+W+" "+H+'" preserveAspectRatio="none" role="img" aria-label="Contratos por año">'+
+    bars+'<line class="bl" x1="'+padL+'" y1="'+(padT+ih)+'" x2="'+(W-padR)+'" y2="'+(padT+ih)+'"/>'+ticks+"</svg>";
+}
+
+$("#buscarCtta").addEventListener("click", () => buscarContratistas($("#qCtta").value));
+$("#qCtta").addEventListener("keydown", e => { if (e.key === "Enter") buscarContratistas($("#qCtta").value); });
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-perfil]"); if (!b) return;
+  irA("contratista");
+  $("#qCtta").value = b.dataset.nom || b.dataset.perfil;
+  abrirPerfil(b.dataset.perfil, b.dataset.nom);
+});
+
 /* ============================================================
    Interfaz
    ============================================================ */
@@ -1372,6 +1560,8 @@ function leerURL(){
 let tabActual = "novedades";
 const cargadas = new Set();
 const CARGA = { banderas:cargarBanderas, contratos:cargarContratos, contratistas:cargarContratistas,
+  contratista:() => { if (!$("#cttaResultados").innerHTML) $("#cttaResultados").innerHTML =
+    '<div class="note info">Busca por nombre o documento. También llegas aquí haciendo clic en el nombre de cualquier contratista en las otras pestañas.</div>'; },
   procesos:cargarProcesos, vencimientos:() => { cargarVencimientos(); cargarModalidades(); },
   seguimiento:renderSeguimiento, metodologia:renderMetodologia, novedades:()=>{} };
 function irA(tab){

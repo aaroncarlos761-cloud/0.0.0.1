@@ -27,6 +27,15 @@ contratación del periodo.
 **Metodología.** Qué detecta cada regla, por qué importa, de dónde sale y qué no puede ver este
 monitor. Está dentro del sitio para que cualquiera pueda auditar el criterio.
 
+**Buscar contratista.** Se escribe un nombre, parte de un nombre o un documento y sale la ficha
+completa de esa persona o empresa: cuántos contratos tiene con la ESAP en todo el histórico, por
+cuánto valor, cuántos están en curso hoy y cuántos vencen en los próximos sesenta días, desde
+cuándo contrata y hace cuántos años, con qué sedes, por qué modalidades le adjudican, qué tipos de
+contrato firma, quién le ha supervisado, qué banderas rojas acumula y un gráfico de contratos por
+año. Esta búsqueda ignora a propósito el rango de fechas de los filtros de arriba, porque lo que
+interesa es la trayectoria completa. Al nombre de cualquier contratista se le puede hacer clic
+desde cualquier tabla del sitio para llegar a su ficha.
+
 **Contratos.** La tabla completa con filtros por sede, fechas, modalidad, tipo y texto
 libre sobre el objeto o el contratista.
 
