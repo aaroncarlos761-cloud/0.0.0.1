@@ -21,8 +21,10 @@ Metodología del propio sitio, con la fuente de cada una. Se puede filtrar por r
 lo marcado a CSV con la explicación incluida.
 
 **Vencimientos y modalidades.** Los contratos en ejecución que terminan dentro de 30, 60 o 90
-días, útil para pedir informes de supervisión a tiempo, y el reparto por modalidad de
-contratación del periodo.
+días, útil para pedir informes de supervisión a tiempo, con un filtro por tipo de señal que solo
+ofrece las banderas que de verdad aparecen en esa ventana, cada una con su conteo, más una opción
+para ver los que no activaron ninguna. Al filtrar, la página explica la regla escogida y su fuente,
+y el CSV baja exactamente lo filtrado. Abajo, el reparto por modalidad de contratación del periodo.
 
 **Metodología.** Qué detecta cada regla, por qué importa, de dónde sale y qué no puede ver este
 monitor. Está dentro del sitio para que cualquiera pueda auditar el criterio.

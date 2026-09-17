@@ -307,7 +307,16 @@ footer.foot{border-top:1px solid var(--ring);margin-top:36px;padding-top:16px;co
     <div class="card">
       <h2>Contratos que vencen pronto</h2>
       <p class="sub">En ejecución, con fecha de terminación dentro de los próximos <select id="venDias" style="background:var(--plane);color:var(--ink);border:1px solid var(--ring);border-radius:6px;padding:2px 6px;font:inherit"><option value="30">30</option><option value="60">60</option><option value="90">90</option></select> días. Sirve para pedir informes de supervisión a tiempo. No depende del filtro de fechas de firma.</p>
-      <div class="f-actions" style="margin-bottom:12px"><button class="btn-ghost" id="csvVenc" type="button">Descargar CSV</button></div>
+      <div class="f-actions" style="margin-bottom:12px">
+        <label style="font-size:12px;color:var(--ink-muted);display:flex;align-items:center;gap:6px">
+          Filtrar por señal
+          <select id="venSenal" style="background:var(--plane);color:var(--ink);border:1px solid var(--ring);border-radius:6px;padding:3px 7px;font:inherit;font-size:12.5px;max-width:320px">
+            <option value="">Todas</option>
+          </select>
+        </label>
+        <button class="btn-ghost" id="csvVenc" type="button">Descargar CSV de lo filtrado</button>
+      </div>
+      <div id="venResumen"></div>
       <div id="senVenc"><div class="loading"><span class="spin"></span>Consultando…</div></div>
     </div>
     <div class="card">
@@ -896,9 +905,9 @@ document.addEventListener("click", e => {
   if (!fuente) return;
   const f = ORD[k], s = dir === "asc" ? 1 : -1;
   fuente.sort((a,b) => { const x=f(a), y=f(b); return (x>y?1:x<y?-1:0)*s; });
-  const destino = { contratos:"#conTabla", novedades:"#novTabla", vencimientos:"#senVenc" }[tabla];
-  const senal = tabla !== "contratos";
-  $(destino).innerHTML = tablaContratos(fuente, { id: tabla, senal });
+  if (tabla === "vencimientos"){ pintarVencimientos(); return; }
+  const destino = { contratos:"#conTabla", novedades:"#novTabla" }[tabla];
+  $(destino).innerHTML = tablaContratos(fuente, { id: tabla, senal: tabla !== "contratos" });
 });
 
 /* ---- ficha ---- */
@@ -1219,8 +1228,10 @@ async function cargarProcesos(){
 /* ============================================================
    VENCIMIENTOS Y MODALIDADES
    ============================================================ */
+let venFiltro = "";
 async function cargarVencimientos(){
   const cont = $("#senVenc");
+  cont.innerHTML = '<div class="loading"><span class="spin"></span>Consultando…</div>';
   try {
     const dias = +$("#venDias").value || 30;
     const w = "nit_entidad in(" + state.nits.map(n=>"'"+n+"'").join(",") + ")"
@@ -1230,11 +1241,47 @@ async function cargarVencimientos(){
     const ctx = construirContexto(rows);
     for (const r of rows) r.__flags = evaluarContrato(r, ctx);
     cacheVenc = rows; indexar(rows);
-    cont.innerHTML = rows.length
-      ? '<p class="sub">' + fmtInt(rows.length) + " contratos terminan en los próximos " + dias + " días.</p>" +
-        tablaContratos(rows, { id:"vencimientos", senal:true })
-      : '<div class="empty">Ningún contrato vence en esa ventana.</div>';
+
+    // el desplegable solo ofrece señales que de verdad aparecen en esta ventana
+    const conteo = {};
+    for (const r of rows) for (const f of r.__flags) conteo[f.id] = (conteo[f.id]||0) + 1;
+    const limpios = rows.filter(r => !r.__flags.length).length;
+    const sel = $("#venSenal"), previo = venFiltro;
+    sel.innerHTML = '<option value="">Todas las señales (' + fmtInt(rows.length) + ")</option>" +
+      REGLAS.filter(r => conteo[r.id]).sort((a,b) => b.sev - a.sev || conteo[b.id]-conteo[a.id])
+        .map(r => '<option value="'+r.id+'">'+esc(SEV[r.sev].nombre)+" · "+esc(r.nombre)+" ("+fmtInt(conteo[r.id])+")</option>").join("") +
+      (limpios ? '<option value="__sin">Sin ninguna señal ('+fmtInt(limpios)+")</option>" : "");
+    sel.value = [...sel.options].some(o => o.value === previo) ? previo : "";
+    venFiltro = sel.value;
+    pintarVencimientos();
   } catch(e){ errBox(cont, e); }
+}
+
+function venFiltrados(){
+  if (!venFiltro) return cacheVenc;
+  if (venFiltro === "__sin") return cacheVenc.filter(r => !r.__flags.length);
+  return cacheVenc.filter(r => r.__flags.some(f => f.id === venFiltro));
+}
+
+function pintarVencimientos(){
+  const dias = +$("#venDias").value || 30;
+  const lista = venFiltrados();
+  const regla = REGLAS.find(r => r.id === venFiltro);
+  $("#venResumen").innerHTML = !cacheVenc.length ? ""
+    : regla
+      ? '<div class="note"><b>'+esc(regla.nombre)+".</b> "+esc(regla.que)+" "+esc(regla.porque)+
+        '<br><span style="font-size:11.5px">Fuente de la regla: '+esc(regla.fuente)+"</span></div>"
+      : venFiltro === "__sin"
+        ? '<div class="note info">Contratos que vencen pronto y no activaron ninguna regla. Siguen necesitando informe de supervisión antes de terminar.</div>'
+        : "";
+  $("#senVenc").innerHTML = !cacheVenc.length
+    ? '<div class="empty">Ningún contrato vence en esa ventana.</div>'
+    : !lista.length
+      ? '<div class="empty">Ningún contrato con esa señal vence en los próximos '+dias+' días. Amplía la ventana o quita el filtro.</div>'
+      : '<p class="sub">' + fmtInt(lista.length) +
+        (venFiltro ? " de " + fmtInt(cacheVenc.length) : "") +
+        " contratos terminan en los próximos " + dias + " días.</p>" +
+        tablaContratos(lista, { id:"vencimientos", senal:true });
 }
 
 async function cargarModalidades(){
@@ -1589,12 +1636,15 @@ $("#resetBtn").addEventListener("click", () => {
   escribirFiltros(); $("#applyBtn").click();
 });
 $("#venDias").addEventListener("change", cargarVencimientos);
+$("#venSenal").addEventListener("change", e => { venFiltro = e.target.value; pintarVencimientos(); });
 $("#minCtr").addEventListener("change", cargarContratistas);
 $("#moreCon").addEventListener("click", () => { state.limCon += 500; cargarContratos(); });
 
 $("#csvCon").addEventListener("click", () => downloadCSV("contratos-esap.csv", toCSV(cacheContratos, COLS_CONTRATO)));
 $("#csvNov").addEventListener("click", () => downloadCSV("novedades-esap.csv", toCSV(cacheNov, COLS_CONTRATO)));
-$("#csvVenc").addEventListener("click", () => downloadCSV("vencimientos-esap.csv", toCSV(cacheVenc, COLS_CONTRATO)));
+$("#csvVenc").addEventListener("click", () => downloadCSV(
+  "vencimientos-esap" + (venFiltro && venFiltro !== "__sin" ? "-" + venFiltro : "") + ".csv",
+  toCSV(venFiltrados(), COLS_CONTRATO)));
 $("#csvBan").addEventListener("click", () => {
   const min = +$("#banSev").value || 1;
   let lista = banderas.filter(b => b.reglas[0].sev >= min);
