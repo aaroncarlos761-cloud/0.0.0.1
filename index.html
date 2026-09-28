@@ -52,6 +52,16 @@ header.top{border-bottom:1px solid var(--ring);background:var(--surface-1);posit
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px;max-height:104px;overflow:auto;padding:2px}
 .chip{border:1px solid var(--ring);background:var(--plane);color:var(--ink-2);border-radius:999px;padding:3px 9px;font-size:12px;cursor:pointer;user-select:none}
 .chip[aria-pressed="true"]{background:var(--series-1);border-color:var(--series-1);color:#fff}
+.vchips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.vchip{border:1px solid var(--ring);background:var(--plane);color:var(--ink-2);border-radius:8px;padding:7px 11px;font:inherit;font-size:12.5px;cursor:pointer;text-align:left;line-height:1.35}
+.vchip b{display:block;color:var(--ink);font-size:12.5px;font-weight:600}
+.vchip span{color:var(--ink-muted);font-size:11.5px}
+.vchip[aria-pressed="true"]{background:var(--series-1);border-color:var(--series-1)}
+.vchip[aria-pressed="true"] b,.vchip[aria-pressed="true"] span{color:#fff}
+.vchip[disabled]{opacity:.45;cursor:default}
+.nvm-ctl{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));align-items:end}
+.nvm-ctl input,.nvm-ctl select{background:var(--plane);color:var(--ink);border:1px solid var(--ring);border-radius:7px;padding:7px 9px;font:inherit;font-size:13px;width:100%}
+.nvm-ctl label{display:block;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:5px}
 
 nav.tabs{display:flex;gap:2px;margin:22px 0 0;border-bottom:1px solid var(--ring);overflow-x:auto}
 nav.tabs button{background:none;border:0;border-bottom:2px solid transparent;color:var(--ink-2);font:inherit;font-size:13.5px;padding:9px 13px;cursor:pointer;white-space:nowrap}
@@ -194,6 +204,7 @@ footer.foot{border-top:1px solid var(--ring);margin-top:36px;padding-top:16px;co
 
   <nav class="tabs" role="tablist">
     <button role="tab" data-tab="novedades" aria-selected="true">Novedades <span class="cnt" id="cNov">—</span></button>
+    <button role="tab" data-tab="nuevos" aria-selected="false">Nuevos por monto <span class="cnt" id="cNvm">—</span></button>
     <button role="tab" data-tab="banderas" aria-selected="false">Banderas rojas <span class="cnt" id="cBan">—</span></button>
     <button role="tab" data-tab="contratos" aria-selected="false">Contratos</button>
     <button role="tab" data-tab="contratistas" aria-selected="false">Contratistas</button>
@@ -218,6 +229,44 @@ footer.foot{border-top:1px solid var(--ring);margin-top:36px;padding-top:16px;co
       <h2>Contratos firmados por mes</h2>
       <p class="sub">Ventana de vigilancia, todas las cuentas seleccionadas.</p>
       <div id="chartWrap"><div class="loading"><span class="spin"></span>Cargando…</div></div>
+    </div>
+  </section>
+
+  <!-- ============ NUEVOS POR MONTO ============ -->
+  <section class="panel" id="p-nuevos" role="tabpanel">
+    <div class="note info">Los contratos firmados dentro de la ventana que elijas, repartidos por rango de valor. Sirve para separar de una vez la contratación menuda de la que mueve plata: los rangos de arriba te dicen cuántos contratos y cuánto dinero hay en cada franja, y al hacer clic en uno la tabla se queda solo con esa franja. Los registros con valor igual o superior a cien mil millones quedan fuera de las sumas porque son errores de digitación, y el motor de banderas rojas los reporta aparte.</div>
+    <div class="card">
+      <h2>Ventana y rango de valor</h2>
+      <p class="sub">La ventana se cuenta desde hoy hacia atrás sobre la fecha de firma. Las cuentas de la ESAP, la modalidad, el tipo de contrato y la búsqueda de texto que tengas puestos arriba también se aplican aquí. Si escribes un rango propio en «desde» y «hasta», manda ese y se sueltan los rangos predefinidos.</p>
+      <div class="nvm-ctl">
+        <div class="f">
+          <label for="nvmDias">Firmados en los últimos</label>
+          <select id="nvmDias">
+            <option value="9">9 días</option>
+            <option value="15">15 días</option>
+            <option value="30" selected>30 días</option>
+            <option value="60">60 días</option>
+            <option value="90">90 días</option>
+            <option value="120">120 días</option>
+            <option value="180">180 días</option>
+            <option value="365">365 días</option>
+          </select>
+        </div>
+        <div class="f"><label for="nvmMin">Valor desde ($)</label><input type="number" id="nvmMin" min="0" step="100000" placeholder="0" inputmode="numeric"></div>
+        <div class="f"><label for="nvmMax">Valor hasta ($)</label><input type="number" id="nvmMax" min="0" step="100000" placeholder="sin tope" inputmode="numeric"></div>
+        <div class="f f-actions">
+          <button class="btn" id="nvmAplicar" type="button">Aplicar rango</button>
+          <button class="btn-ghost" id="nvmLimpiar" type="button">Todos los montos</button>
+        </div>
+      </div>
+      <div class="vchips" id="nvmRangos"></div>
+    </div>
+    <div class="tiles" id="nvmTiles"></div>
+    <div class="card">
+      <h2>Contratos del rango <span id="nvmRotulo" style="font-weight:400;color:var(--ink-muted);font-size:12.5px"></span></h2>
+      <p class="sub">Ordenados por valor, de mayor a menor. Haz clic en el encabezado de una columna para reordenar. La columna de señal muestra las banderas rojas de cada contrato.</p>
+      <div class="f-actions" style="margin-bottom:12px"><button class="btn-ghost" id="csvNvm" type="button">Descargar CSV de este rango</button></div>
+      <div id="nvmTabla"><div class="loading"><span class="spin"></span>Consultando SECOP…</div></div>
     </div>
   </section>
 
@@ -901,12 +950,12 @@ document.addEventListener("click", e => {
   const prev = ordEstado[tabla] || {};
   const dir = (prev.k === k && prev.dir === "asc") ? "desc" : "asc";
   ordEstado[tabla] = { k, dir };
-  const fuente = { contratos: cacheContratos, novedades: cacheNov, vencimientos: cacheVenc }[tabla];
+  const fuente = { contratos: cacheContratos, novedades: cacheNov, vencimientos: cacheVenc, nuevos: cacheNvm }[tabla];
   if (!fuente) return;
   const f = ORD[k], s = dir === "asc" ? 1 : -1;
   fuente.sort((a,b) => { const x=f(a), y=f(b); return (x>y?1:x<y?-1:0)*s; });
   if (tabla === "vencimientos"){ pintarVencimientos(); return; }
-  const destino = { contratos:"#conTabla", novedades:"#novTabla" }[tabla];
+  const destino = { contratos:"#conTabla", novedades:"#novTabla", nuevos:"#nvmTabla" }[tabla];
   $(destino).innerHTML = tablaContratos(fuente, { id: tabla, senal: tabla !== "contratos" });
 });
 
@@ -1043,6 +1092,120 @@ function dibujarChart(rows){
     el.addEventListener("mouseleave", () => tip.style.opacity = 0);
   });
 }
+
+/* ============================================================
+   NUEVOS POR MONTO
+   ============================================================ */
+const RANGOS = [
+  { id:"r1", et:"Hasta $5 M",          min:0,      max:5e6 },
+  { id:"r2", et:"$5 M – $15 M",        min:5e6,    max:15e6 },
+  { id:"r3", et:"$15 M – $30 M",       min:15e6,   max:30e6 },
+  { id:"r4", et:"$30 M – $60 M",       min:30e6,   max:60e6 },
+  { id:"r5", et:"$60 M – $100 M",      min:60e6,   max:100e6 },
+  { id:"r6", et:"$100 M – $500 M",     min:100e6,  max:500e6 },
+  { id:"r7", et:"$500 M – $1.000 M",   min:500e6,  max:1000e6 },
+  { id:"r8", et:"Más de $1.000 M",     min:1000e6, max:UMBRAL_IMPOSIBLE }
+];
+let nvmDias = 30, nvmSel = null, nvmMin = null, nvmMax = null;
+let cacheNvm = [], cacheNvmTodos = [];
+
+function whereNuevos(){
+  const p = ["nit_entidad in(" + state.nits.map(n => "'"+n+"'").join(",") + ")",
+             "fecha_de_firma >= '" + iso(masDias(hoy(), -nvmDias)) + "T00:00:00'",
+             "fecha_de_firma <= '" + iso(hoy()) + "T23:59:59'"];
+  if (state.modalidad) p.push("modalidad_de_contratacion = '" + sq(state.modalidad) + "'");
+  if (state.tipo) p.push("tipo_de_contrato = '" + sq(state.tipo) + "'");
+  if (state.texto) {
+    const t = sq(state.texto.toUpperCase());
+    p.push("(upper(objeto_del_contrato) like '%"+t+"%' OR upper(proveedor_adjudicado) like '%"+t+"%' OR upper(referencia_del_contrato) like '%"+t+"%')");
+  }
+  return p.join(" AND ");
+}
+
+const valorDe = r => Number(r.valor_del_contrato) || 0;
+const enRango = (v, min, max) => v >= min && (max == null || v < max);
+
+function rangoActivo(){
+  if (nvmMin != null || nvmMax != null)
+    return { et:"de " + fmtPesos(nvmMin || 0) + " a " + (nvmMax != null ? fmtPesos(nvmMax) : "sin tope"),
+             min: nvmMin || 0, max: nvmMax != null ? nvmMax + 1 : null, propio:true };
+  if (nvmSel) return RANGOS.find(r => r.id === nvmSel) || null;
+  return null;
+}
+
+async function cargarNuevosMonto(){
+  const cont = $("#nvmTabla");
+  cont.innerHTML = '<div class="loading"><span class="spin"></span>Consultando SECOP…</div>';
+  try {
+    const rows = await soql(DS_CONTRATOS, { "$select":SEL_CONTRATO, "$where":whereNuevos(),
+                                            "$order":"valor_del_contrato DESC", "$limit":5000 });
+    const ctx = construirContexto(rows);
+    for (const r of rows) r.__flags = evaluarContrato(r, ctx);
+    cacheNvmTodos = rows; indexar(rows);
+    pintarNuevosMonto();
+  } catch(e){ errBox(cont, e); $("#nvmRangos").innerHTML = ""; $("#nvmTiles").innerHTML = ""; }
+}
+
+function pintarNuevosMonto(){
+  const todos = cacheNvmTodos;
+  const validos = todos.filter(r => valorDe(r) < UMBRAL_IMPOSIBLE);
+  const valTotal = validos.reduce((a,r) => a + valorDe(r), 0);
+
+  $("#nvmRangos").innerHTML = RANGOS.map(g => {
+    const en = validos.filter(r => enRango(valorDe(r), g.min, g.max));
+    const v  = en.reduce((a,r) => a + valorDe(r), 0);
+    return '<button class="vchip" type="button" data-rango="'+g.id+'" aria-pressed="'+(nvmSel===g.id && nvmMin==null && nvmMax==null)+'"'+
+           (en.length ? "" : " disabled") + '><b>'+esc(g.et)+'</b><span>'+fmtInt(en.length)+
+           (en.length===1 ? " contrato · " : " contratos · ")+fmtCOP(v)+'</span></button>';
+  }).join("");
+
+  const act = rangoActivo();
+  const sel = act ? todos.filter(r => valorDe(r) < UMBRAL_IMPOSIBLE && enRango(valorDe(r), act.min, act.max)) : todos;
+  cacheNvm = sel;
+
+  const valSel = sel.filter(r => valorDe(r) < UMBRAL_IMPOSIBLE).reduce((a,r) => a + valorDe(r), 0);
+  const directos = sel.filter(r => (r.modalidad_de_contratacion||"").toLowerCase().includes("directa")).length;
+  const conBandera = sel.filter(r => (r.__flags||[]).some(f => f.sev >= 2)).length;
+  const mayor = sel.reduce((m,r) => valorDe(r) > valorDe(m||{}) && valorDe(r) < UMBRAL_IMPOSIBLE ? r : m, null);
+
+  $("#nvmTiles").innerHTML =
+    tile("Contratos", fmtInt(sel.length), "firmados en los últimos " + nvmDias + " días") +
+    tile("Valor del rango", fmtCOP(valSel), valTotal ? (valSel/valTotal*100).toFixed(1) + "% del valor de la ventana" : "",
+         valTotal ? valSel/valTotal : 0) +
+    tile("Con bandera roja", fmtInt(conBandera), "severidad alta o crítica", undefined, conBandera ? "alta" : "") +
+    tile("Por contratación directa", fmtInt(directos), sel.length ? (directos/sel.length*100).toFixed(0) + "% de este rango" : "",
+         sel.length ? directos/sel.length : 0);
+
+  $("#nvmRotulo").textContent = "· " + (act ? act.et : "todos los montos") + " · " + fmtInt(sel.length) +
+    " de " + fmtInt(todos.length) + " contratos de la ventana" +
+    (mayor ? " · el mayor es " + (mayor.referencia_del_contrato || "sin referencia") + " por " + fmtPesos(valorDe(mayor)) : "");
+
+  const c = $("#cNvm"); c.textContent = sel.length; c.classList.toggle("hot", conBandera > 0);
+  $("#nvmTabla").innerHTML = tablaContratos(sel.slice(0,500), { id:"nuevos", senal:true }) +
+    (sel.length > 500 ? '<p class="sub" style="margin-top:10px">Se muestran los 500 de mayor valor. El CSV trae los '+fmtInt(sel.length)+' del rango.</p>' : "");
+}
+
+$("#nvmRangos").addEventListener("click", e => {
+  const b = e.target.closest(".vchip"); if (!b || b.disabled) return;
+  nvmSel = (nvmSel === b.dataset.rango) ? null : b.dataset.rango;
+  nvmMin = nvmMax = null; $("#nvmMin").value = ""; $("#nvmMax").value = "";
+  pintarNuevosMonto();
+});
+$("#nvmAplicar").addEventListener("click", () => {
+  const a = $("#nvmMin").value.trim(), b = $("#nvmMax").value.trim();
+  nvmMin = a === "" ? null : Math.max(0, Number(a));
+  nvmMax = b === "" ? null : Math.max(0, Number(b));
+  if (nvmMin != null && nvmMax != null && nvmMax < nvmMin){ const t = nvmMin; nvmMin = nvmMax; nvmMax = t;
+    $("#nvmMin").value = nvmMin; $("#nvmMax").value = nvmMax; }
+  if (nvmMin != null || nvmMax != null) nvmSel = null;
+  pintarNuevosMonto();
+});
+$("#nvmLimpiar").addEventListener("click", () => {
+  nvmSel = null; nvmMin = nvmMax = null; $("#nvmMin").value = ""; $("#nvmMax").value = "";
+  pintarNuevosMonto();
+});
+$("#nvmDias").addEventListener("change", e => { nvmDias = +e.target.value || 30; cargarNuevosMonto(); });
+$("#csvNvm").addEventListener("click", () => downloadCSV("nuevos-por-monto-esap.csv", toCSV(cacheNvm, COLS_CONTRATO)));
 
 /* ============================================================
    BANDERAS ROJAS
@@ -1606,7 +1769,7 @@ function leerURL(){
 
 let tabActual = "novedades";
 const cargadas = new Set();
-const CARGA = { banderas:cargarBanderas, contratos:cargarContratos, contratistas:cargarContratistas,
+const CARGA = { nuevos:cargarNuevosMonto, banderas:cargarBanderas, contratos:cargarContratos, contratistas:cargarContratistas,
   contratista:() => { if (!$("#cttaResultados").innerHTML) $("#cttaResultados").innerHTML =
     '<div class="note info">Busca por nombre o documento. También llegas aquí haciendo clic en el nombre de cualquier contratista en las otras pestañas.</div>'; },
   procesos:cargarProcesos, vencimientos:() => { cargarVencimientos(); cargarModalidades(); },
