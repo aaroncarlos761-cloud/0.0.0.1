@@ -93,7 +93,6 @@ th,td{padding:8px 11px;text-align:left;border-bottom:1px solid var(--grid);verti
 th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-muted);font-weight:600;white-space:nowrap;position:sticky;top:0;background:var(--surface-1);z-index:2}
 th[data-sort]{cursor:pointer;user-select:none}
 th[data-sort]:hover{color:var(--ink)}
-th .ar{opacity:.5;font-size:9px;margin-left:3px}
 tbody tr:last-child td{border-bottom:0}
 tbody tr:hover{background:var(--plane)}
 td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
@@ -153,14 +152,37 @@ dl.kv dd{margin:0;color:var(--ink)}
 
 footer.foot{border-top:1px solid var(--ring);margin-top:36px;padding-top:16px;color:var(--ink-muted);font-size:12px}
 
+:focus-visible{outline:2px solid var(--series-1);outline-offset:2px;border-radius:4px}
+.hist{margin-top:18px}
+.hist h4{margin:0 0 4px;font-size:13.5px}
+.hist .sub{margin:0 0 10px;color:var(--ink-muted);font-size:12px}
+.hist td{font-size:12.5px}
+.hist .prop{color:var(--ink-muted);font-size:11.5px;padding-top:0}
+#avisoFuente .note{margin-top:16px}
+
 @media print{
   body{background:#fff}
-  header.top,nav.tabs,.filters,.panel,footer.foot,.sheet-act{display:none !important}
+  .hist .tw{border:0;overflow:visible}
+  header.top,nav.tabs,.filters,.panel,footer.foot,.sheet-act,#btnCarga,#avisoFuente{display:none !important}
   #sheet{position:static;display:block !important;background:none;padding:0}
   .sheet-in{border:0;max-width:none}
 }
 @media (max-width:640px){
-  dl.kv{grid-template-columns:1fr}
+  dl.kv{grid-template-columns:1fr;gap:2px 0}
+  dl.kv dd{margin-bottom:8px}
+  #sheet{padding:0}
+  .sheet-in{border-radius:0;min-height:100%;padding:18px 16px}
+  .tile .v{font-size:21px}
+  .card{padding:14px 12px}
+  nav.tabs button{padding:9px 10px}
+  .hist .tw{border:0;background:none;overflow:visible}
+  .hist table,.hist tbody,.hist tr,.hist td{display:block;width:100%}
+  .hist thead{display:none}
+  .hist tbody tr{border:1px solid var(--ring);border-radius:10px;padding:8px 10px;margin-bottom:8px;background:var(--surface-1)}
+  .hist tbody tr.prop-row{margin-top:-10px;border-top:0;border-radius:0 0 10px 10px}
+  .hist td{border:0;padding:3px 0;text-align:left}
+  .hist td[data-l]::before{content:attr(data-l);display:inline-block;min-width:92px;color:var(--ink-muted);font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+  .hist td[data-l="#"],.hist td:empty{display:none}
   .wrap{padding-inline:14px}
   .top-in{padding-inline:14px}
 }
@@ -171,6 +193,7 @@ footer.foot{border-top:1px solid var(--ring);margin-top:36px;padding-top:16px;co
 <header class="top">
   <div class="top-in">
     <h1 class="brand">Monitor de Contratación ESAP <span>· SECOP II</span></h1>
+    <span style="font-size:11.5px;color:var(--ink-muted)">Veeduría ciudadana inscrita · Res. PDCPL 21-526</span>
     <div class="top-meta">
       <span id="freshness">—</span>
       <button class="btn-ghost" id="themeBtn" type="button">Tema</button>
@@ -180,6 +203,7 @@ footer.foot{border-top:1px solid var(--ring);margin-top:36px;padding-top:16px;co
 </header>
 
 <div class="wrap">
+  <div id="avisoFuente" role="status"></div>
 
   <section class="filters" aria-label="Filtros">
     <div class="f" style="grid-column:1/-1">
@@ -212,6 +236,7 @@ footer.foot{border-top:1px solid var(--ring);margin-top:36px;padding-top:16px;co
     <button role="tab" data-tab="procesos" aria-selected="false">Procesos</button>
     <button role="tab" data-tab="vencimientos" aria-selected="false">Vencimientos</button>
     <button role="tab" data-tab="seguimiento" aria-selected="false">Seguimiento <span class="cnt" id="cSeg">0</span></button>
+    <button role="tab" data-tab="caso" aria-selected="false">Caso BOG-1481-2025</button>
     <button role="tab" data-tab="metodologia" aria-selected="false">Metodología</button>
   </nav>
 
@@ -274,6 +299,7 @@ footer.foot{border-top:1px solid var(--ring);margin-top:36px;padding-top:16px;co
   <section class="panel" id="p-banderas" role="tabpanel">
     <div class="note info">Una bandera roja es un indicio, nunca una prueba. Un contrato marcado aquí no es un contrato irregular: es un contrato que merece que alguien abra el expediente. Las reglas y sus fuentes están explicadas en la pestaña de Metodología.</div>
     <div class="tiles" id="banTiles"></div>
+    <div id="banHist" role="status"></div>
     <div class="card">
       <h2>Qué se encontró, regla por regla</h2>
       <p class="sub">Haz clic en una regla para filtrar la tabla de abajo.</p>
@@ -346,7 +372,10 @@ footer.foot{border-top:1px solid var(--ring);margin-top:36px;padding-top:16px;co
     <div class="card">
       <h2>Procesos de contratación</h2>
       <p class="sub">Los procesos son la etapa anterior al contrato: es donde una veeduría todavía alcanza a incidir. La columna de invitados frente a respuestas muestra cuánta competencia hubo realmente, y la de señal muestra las banderas que le salieron al proceso.</p>
-      <div class="f-actions" style="margin-bottom:12px"><button class="btn-ghost" id="csvProc" type="button">Descargar CSV</button></div>
+      <div class="f-actions" style="margin-bottom:12px"><button class="btn-ghost" id="csvProc" type="button">Descargar CSV</button>
+        <button class="btn-ghost" id="btnVinc" type="button">Buscar vínculos entre proponentes</button></div>
+      <div id="vincEstado" role="status" class="sub" style="margin:0 0 10px"></div>
+      <div id="vincRes"></div>
       <div id="procTabla"><div class="loading"><span class="spin"></span>Consultando SECOP…</div></div>
     </div>
   </section>
@@ -365,6 +394,7 @@ footer.foot{border-top:1px solid var(--ring);margin-top:36px;padding-top:16px;co
         </label>
         <button class="btn-ghost" id="csvVenc" type="button">Descargar CSV de lo filtrado</button>
       </div>
+      <div id="venHist" role="status"></div>
       <div id="venResumen"></div>
       <div id="senVenc"><div class="loading"><span class="spin"></span>Consultando…</div></div>
     </div>
@@ -391,6 +421,114 @@ footer.foot{border-top:1px solid var(--ring);margin-top:36px;padding-top:16px;co
   </section>
 
   <!-- ============ METODOLOGÍA ============ -->
+  <!-- ============ CASO BOG-1481-2025 ============ -->
+  <section class="panel" id="p-caso" role="tabpanel">
+
+    <div class="card">
+      <h2>Contrato BOG-1481-2025 — expediente en seguimiento</h2>
+      <p class="sub">ESAP Sede Central · Corporación Colombia Digital · contratación directa · ejercicio de arquitectura empresarial y fábrica de software de 10.000 horas. Expediente verificado documento por documento el 22 de septiembre de 2026.</p>
+      <div class="tiles">
+        <div class="tile"><div class="k">Plazo original</div><div class="v">78 días</div><div class="n">Del acta de inicio (14 oct 2025) al 31 dic 2025. La ficha de SECOP publica 89, contados desde la firma del 3 de octubre.</div></div>
+        <div class="tile alta"><div class="k">Días adicionados</div><div class="v">303</div><div class="n">Tres modificaciones. El contrato termina el 30 de octubre de 2026, según la Modificación No. 03.</div></div>
+        <div class="tile"><div class="k">Valor con adición</div><div class="v">$3.670.280.520</div><div class="n">$2.555.394.540 iniciales más $1.114.885.980 adicionados el 15 de abril de 2026.</div></div>
+        <div class="tile media"><div class="k">Sin ejecutar</div><div class="v">37,7 %</div><div class="n">$1.384.367.324. La última factura es del 23 de junio de 2026.</div></div>
+      </div>
+      <div class="note" style="margin-bottom:14px">Con corte al 1 de septiembre de 2026, la supervisión reporta en la Modificación No. 03 un avance físico ponderado del 86 % y financiero del 74 %. El valor facturado registrado en SECOP da 62,3 %. La diferencia está preguntada en la Petición 2.</div>
+      <div class="note info">Este monitor no califica el contrato. Prorrogar y adicionar es legal, la adición quedó por debajo del tope del 50 % del valor inicial, la supervisión certificó por escrito ejecución a satisfacción y SECOP no registra ningún incumplimiento. Lo que está documentado aquí es cómo y cuándo, no si es válido.</div>
+      <p style="font-size:12.5px;color:var(--ink-2);margin:0">Expediente oficial: proceso <code>CO1.NTC.8884055</code>, contrato <code>CO1.PCCNTR.8407628</code>, referencia <code>ESAP-CD-1481-2025</code> en <a href="https://community.secop.gov.co/Public/Tendering/ContractNoticePhasePrepareView/Index?notice=CO1.NTC.8884055" target="_blank" rel="noopener">SECOP II</a>.</p>
+    </div>
+
+    <div class="card">
+      <h2>El contrato estaba planeado para junio</h2>
+      <p class="sub">Plan Anual de Adquisiciones 2025 de la ESAP, línea 1273.</p>
+      <p style="font-size:13px;color:var(--ink-2);margin:0">La línea 1273 del PAA 2025 trae este mismo objeto por $3.018.521.869, bajo contratación directa, con fecha esperada de inicio en <b>junio de 2025</b>. El contrato se firmó el 3 de octubre y empezó el 14 de octubre, cuatro meses después, contra una vigencia presupuestal que se cerraba el 31 de diciembre. De ahí salen los setenta y ocho días de plazo.</p>
+    </div>
+
+    <div class="card">
+      <h2>Las tres modificaciones</h2>
+      <p class="sub">Cada una se creó y se aprobó en la plataforma el mismo día, y ese día era el del vencimiento del plazo entonces vigente.</p>
+      <div class="tw"><table>
+        <thead><tr><th>Modificación</th><th class="num">Días</th><th>Queda hasta</th><th>Creada</th><th>Aprobada</th><th class="num">Transcurrido</th></tr></thead>
+        <tbody>
+          <tr><td>01 · <span class="mono">CO1.CTRMOD.21475398</span></td><td class="num">+104</td><td>15 abr 2026</td><td class="mono">30/12/2025 12:54 PM</td><td class="mono">30/12/2025 10:42 PM</td><td class="num">9 h 48 min</td></tr>
+          <tr><td>02 · <span class="mono">CO1.CTRMOD.22646308</span></td><td class="num">+154</td><td>15 sep 2026</td><td class="mono">15/04/2026 4:35 PM</td><td class="mono">15/04/2026 7:53 PM</td><td class="num">3 h 18 min</td></tr>
+          <tr><td>03 · <span class="mono">CO1.CTRMOD.24462695</span></td><td class="num">+45</td><td>30 oct 2026</td><td class="mono">15/09/2026 5:49 PM</td><td class="mono">15/09/2026 8:12 PM</td><td class="num">2 h 23 min</td></tr>
+        </tbody>
+      </table></div>
+      <div class="note" style="margin-top:14px">La Modificación 01 deja constancia de que requirió constituir reserva presupuestal. Los días por modificación son los que registra SECOP; las modificaciones firmadas dicen 105 días la primera y «hasta el 15 de septiembre» la segunda. El total es 303 en las dos cuentas. La Modificación 03 no adiciona dinero. El contrato figura publicado en SECOP II con el campo «el contrato puede ser prorrogado» diligenciado en «No».</div>
+    </div>
+
+    <div class="card">
+      <h2>La facturación</h2>
+      <p class="sub">Seis facturas en once meses. La suma da $2.285.913.196, exactamente el valor facturado que reporta SECOP en datos abiertos.</p>
+      <div class="tw"><table>
+        <thead><tr><th class="num">#</th><th>Factura</th><th>Expedición</th><th class="num">Valor</th></tr></thead>
+        <tbody>
+          <tr><td class="num">1</td><td>810</td><td class="mono">29/12/2025 6:33 PM</td><td class="num"><b>$2.045.905.696</b></td></tr>
+          <tr><td class="num">2</td><td>888</td><td class="mono">01/04/2026 12:27 PM</td><td class="num">$48.001.500</td></tr>
+          <tr><td class="num">3</td><td>889</td><td class="mono">01/04/2026 5:14 PM</td><td class="num">$48.001.500</td></tr>
+          <tr><td class="num">4</td><td>929</td><td class="mono">23/04/2026 2:55 PM</td><td class="num">$48.001.500</td></tr>
+          <tr><td class="num">5</td><td>972</td><td class="mono">22/05/2026 11:13 AM</td><td class="num">$48.001.500</td></tr>
+          <tr><td class="num">6</td><td>1011</td><td class="mono">23/06/2026 12:01 PM</td><td class="num">$48.001.500</td></tr>
+        </tbody>
+      </table></div>
+      <div class="note" style="margin-top:14px">La factura 810 es el 89,5 % de todo lo facturado en once meses y el 80,06 % del valor inicial del contrato: se expidió dos días antes del vencimiento del plazo y un día antes de que se tramitara la primera prórroga. Las otras cinco corresponden al equipo mínimo mensual. En la misma pantalla de ejecución de SECOP, el campo «valor de las entregas» registra 0,00 COP y 0 %.</div>
+    </div>
+
+    <div class="card">
+      <h2>La adición: siete módulos, 7.471 horas</h2>
+      <p class="sub">Modificación 02, del 15 de abril de 2026, por $1.114.885.980 — el 43,63 % del valor inicial. El contrato original comprendía 10.000 horas; la adición añade un 74,7 % más.</p>
+      <div class="tw"><table>
+        <thead><tr><th>Módulo incorporado</th><th class="num">Horas</th></tr></thead>
+        <tbody>
+          <tr><td>Arquitectura Empresarial</td><td class="num">1.488</td></tr>
+          <tr><td>Programación Académica</td><td class="num">1.478</td></tr>
+          <tr><td>RUND — Registro Docente</td><td class="num">1.118</td></tr>
+          <tr><td>Firma Digital / Certificado Digital</td><td class="num">1.114</td></tr>
+          <tr><td>Proceso de Contratación</td><td class="num">761</td></tr>
+          <tr><td>Chatbot Sistema de Gestión de Calidad ISOLUCIÓN</td><td class="num">752</td></tr>
+          <tr><td>Viáticos</td><td class="num">760</td></tr>
+          <tr><td><b>Total</b></td><td class="num"><b>7.471</b></td></tr>
+        </tbody>
+      </table></div>
+      <div class="note" style="margin-top:14px">Tres de esas necesidades estaban por escrito en 2025: el RUND, en un correo del 17 de octubre que cita una mesa de trabajo del 17 de septiembre, y en correos del 23 y 28 de octubre; la programación académica, en un oficio del 6 de noviembre; el chatbot, en un formato de requerimiento del 28 de noviembre. El Plan Anual de Adquisiciones 2026 de la ESAP tiene 1.557 líneas y ninguna corresponde al desarrollo de esos módulos; sí tiene partidas adyacentes y menores: soporte del chatbot por $40.000.000, apoyo a la implementación del RUND por $58.619.000 y certificados de firma digital por $16.500.000 en mínima cuantía.</div>
+    </div>
+
+    <div class="card">
+      <h2>Lo que está bien y también consta</h2>
+      <p class="sub">Una veeduría que solo publica lo que incomoda a la entidad deja de ser creible. Esto sale de los mismos documentos.</p>
+      <ul style="font-size:13px;color:var(--ink-2);margin:0;padding-left:20px;line-height:1.7">
+        <li>El análisis del sector existe, tiene 67 páginas y recogió cinco cotizaciones reales. El adjudicatario ofreció el menor valor.</li>
+        <li>La adición usó exactamente el mismo tarifario del contrato inicial: la hora de desarrollador sigue en $113.050, y la suma cierra al peso.</li>
+        <li>Los siete módulos tienen requerimientos, historias de usuario y cronogramas completos.</li>
+        <li>El informe de diciembre de 2025 documenta seis módulos desplegados, con actas de entrega firmadas.</li>
+        <li>La supervisión certificó por escrito que el contratista ejecuta a satisfacción, y SECOP no registra ningún incumplimiento.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Las tres peticiones</h2>
+      <p class="sub">Derechos de petición de interés general, radicados en oficios separados. Artículo 23 de la Constitución, Ley 1755 de 2015 y artículos 16 y 17 de la Ley 850 de 2003.</p>
+      <div class="tw"><table>
+        <thead><tr><th>Petición</th><th>Dirigida a</th><th>Radicado</th><th>Vence</th><th>Estado</th></tr></thead>
+        <tbody>
+          <tr><td>1 · Plazo, prórrogas y planeación</td><td>Dirección de Contratación</td><td class="mono">—</td><td class="mono">—</td><td><span class="flag media">Por radicar</span></td></tr>
+          <tr><td>2 · La adición, los siete módulos y la facturación</td><td>Subdirección Nacional de Gestión Corporativa</td><td class="mono">—</td><td class="mono">—</td><td><span class="flag media">Por radicar</span></td></tr>
+          <tr><td>3 · La causal de contratación directa</td><td>Subdirección Nacional de Gestión Corporativa</td><td class="mono">—</td><td class="mono">—</td><td><span class="flag media">Por radicar</span></td></tr>
+        </tbody>
+      </table></div>
+      <div class="note info" style="margin-top:14px">El término legal es de quince días hábiles. Cuando se radiquen, en esta tabla van el número de radicado, la fecha de vencimiento y, después, el enlace a la respuesta — responda lo que responda la entidad.</div>
+    </div>
+
+    <div class="card">
+      <h2>Quién hace este seguimiento</h2>
+      <p class="sub">Veeduría ciudadana a la contratación de la ESAP.</p>
+      <p style="font-size:13px;color:var(--ink-2);margin:0 0 10px">Inscrita en el Registro Público de Veedurías Ciudadanas de la Personería de Bogotá D.C. mediante <b>Resolución No. PDCPL 21-526</b>. Acta de constitución del 16 de diciembre de 2024. Tres integrantes, estudiantes de Administración Pública de la ESAP.</p>
+      <p style="font-size:13px;color:var(--ink-2);margin:0">Todo lo publicado en esta página sale de SECOP II, de los datos abiertos de Colombia Compra Eficiente o de documentos del expediente contractual, y cada cifra puede verificarse en la fuente. Donde el expediente respalda a la entidad, también está dicho.</p>
+    </div>
+
+  </section>
+
   <section class="panel" id="p-metodologia" role="tabpanel">
     <div class="card">
       <h2>Cómo funcionan las banderas rojas</h2>
@@ -407,7 +545,7 @@ footer.foot{border-top:1px solid var(--ring);margin-top:36px;padding-top:16px;co
   </section>
 
   <footer class="foot">
-    <p>Fuente: datos abiertos de Colombia, SECOP II. Conjuntos <code>jbjy-vk9h</code> (contratos electrónicos) y <code>p6dx-8zbt</code> (procesos). Las consultas se hacen directamente contra <code>datos.gov.co</code> cada vez que se abre o se filtra esta página, así que lo que ves es lo que el sistema tiene publicado en este momento. El conjunto de contratos se recarga completo una vez al día en la fuente.</p>
+    <p>Fuente: datos abiertos de Colombia, SECOP II. Conjuntos <code>jbjy-vk9h</code> (contratos electrónicos), <code>p6dx-8zbt</code> (procesos) y <code>u8cx-r425</code> (modificaciones a contratos). Las consultas se hacen directamente contra <code>datos.gov.co</code> cada vez que se abre o se filtra esta página, así que lo que ves es lo que el sistema tiene publicado en este momento. El conjunto de contratos se recarga completo una vez al día en la fuente.</p>
     <p>Los documentos de identidad de contratistas personas naturales se muestran enmascarados (por ejemplo 1013&#42;&#42;&#42;&#42;76). El número completo se usa internamente para agrupar los contratos de una misma persona, así que el análisis no pierde precisión, y quien necesite el dato verificado lo encuentra en el expediente oficial de SECOP enlazado en cada fila. Los NIT de empresas y entidades se muestran completos porque no son dato personal.</p>
     <p>Las cifras son las reportadas por la propia entidad a SECOP. Este monitor no las corrige: cuando detecta que un valor es imposible lo señala y lo deja a la vista, porque el error de reporte también es información. Antes de usar cualquier dato en un documento formal, verifícalo en el expediente oficial mediante el enlace de cada contrato.</p>
   </footer>
@@ -434,6 +572,10 @@ footer.foot{border-top:1px solid var(--ring);margin-top:36px;padding-top:16px;co
    se calibraron contra los datos reales de la ESAP para que marquen
    lo excepcional y no lo cotidiano.
    ============================================================ */
+
+const REGLAS_HOY = () => new Date().toISOString().slice(0,10);
+const ESTADO_ABIERTO = /en ejecuci|modificado|suspendido|aprobado|enviado|activo/i;
+const TIPO_OBRA = /obra|interventor|consultor/i;
 
 const REGLAS = [
   /* ---------------- contratos ---------------- */
@@ -567,6 +709,95 @@ const REGLAS = [
                  return !s || s === "no definido" || s === "no definida"; }
   },
 
+  /* ---------- contratos: historial de modificaciones ----------
+     Estas cuatro salieron del caso BOG-1481-2025. Las tres primeras
+     necesitan el conjunto "Modificaciones a contratos" (u8cx-r425),
+     que el monitor consulta aparte solo para los contratos que tienen
+     días adicionados o figuran como modificados. Mientras esa consulta
+     no termina, esas tres reglas no marcan nada.
+     Calibración, Sede Central, modificaciones creadas desde 2025:
+     de 2.972 contratos con modificaciones publicadas, 13 tienen dos o
+     más prórrogas (0,4 %), 37 tienen una prórroga creada al filo del
+     vencimiento y 37 suben su valor un 40 % o más (1,6 %). */
+  {
+    id: "prorrogas-encadenadas", ambito: "contrato", sev: 2, historial: true,
+    nombre: "Prórrogas encadenadas",
+    corto: "Prórrogas en serie",
+    que: "El contrato se ha prorrogado dos o más veces.",
+    porque: "Una prórroga puede ser un imprevisto. Varias seguidas suelen indicar que el plazo original no estaba bien planeado, o que el contrato se está usando para cubrir trabajo que no estaba en su alcance. En la ESAP solo el 0,4 % de los contratos con modificaciones llega a dos prórrogas.",
+    fuente: "Fiscalía, Tomo III, «adiciones irregulares» · Open Contracting R069 · calibrado sobre la ESAP",
+    test: c => !!c.__hist && c.__hist.prorrogas >= 2
+  },
+  {
+    id: "prorroga-vencimiento", ambito: "contrato", sev: 1, historial: true,
+    nombre: "Prórroga al vencimiento",
+    corto: "Al vencimiento",
+    que: "Una modificación que amplía el plazo se creó en SECOP entre dos días antes y un día después de que vencía el plazo vigente.",
+    porque: "Prorrogar el último día deja sin margen para revisar si la prórroga se justifica y es una señal de que el vencimiento no se estaba vigilando. La ventana es de varios días y no de uno porque SECOP suele registrar las fechas de terminación un día después de la que dice el documento firmado.",
+    fuente: "Principio de planeación · caso BOG-1481-2025 · calibrado sobre la ESAP",
+    test: c => !!c.__hist && c.__hist.alVencimiento >= 1
+  },
+  {
+    id: "adicion-tope", ambito: "contrato", sev: 1, historial: true,
+    nombre: "Adición cerca del tope",
+    corto: "Adición ≥ 40 %",
+    que: "Las modificaciones subieron el valor del contrato en un 40 % o más sobre su valor inicial.",
+    porque: "La ley permite adicionar hasta el 50 % del valor inicial, expresado en salarios mínimos. Llegar cerca del tope es legal, pero es donde conviene mirar si lo adicionado era parte del objeto o era un contrato nuevo que necesitaba su propio proceso.",
+    fuente: "Ley 80 de 1993, art. 40, parágrafo · Fiscalía, Tomo III, «adiciones irregulares»",
+    test: c => !!c.__hist && c.__hist.adicionPct >= 0.40
+  },
+  {
+    id: "pasa-vigencia", ambito: "contrato", sev: 1,
+    nombre: "Pasa de vigencia",
+    corto: "Pasa de vigencia",
+    que: "El contrato estaba pactado para terminar en la segunda quincena de diciembre y las prórrogas lo llevaron al año siguiente.",
+    porque: "Un contrato que se planea para cerrar con el año fiscal y se prorroga al siguiente suele requerir reserva presupuestal: la plata se compromete con el trabajo sin terminar. Es el patrón de los contratos que se firman tarde en el año.",
+    fuente: "Decreto 111 de 1996, art. 89 · caso BOG-1481-2025",
+    test: c => {
+      const f = c.fecha_de_fin_del_contrato, d = +c.dias_adicionados || 0;
+      if (!f || d <= 0) return false;
+      const fin = Date.parse(String(f).slice(0,10) + "T00:00:00Z"), orig = new Date(fin - d * 86400000);
+      return orig.getUTCMonth() === 11 && orig.getUTCDate() >= 16 && new Date(fin).getUTCFullYear() > orig.getUTCFullYear();
+    }
+  },
+
+  /* ---------- contratos: caso BOG-1363-2025 (Consorcio Sedes Tupeon) ----------
+     SECOP mostraba pagado el 20 % exacto de un contrato de obra vencido. Era el
+     anticipo: las facturas de obra estaban todas rechazadas. El campo de pago
+     adelantado decía 0, así que la regla de anticipo no lo veía.
+     Calibración, las 16 cuentas de la ESAP, todos los años: de 81 contratos de
+     obra, interventoría o consultoría, 41 están vencidos y siguen abiertos en
+     SECOP; solo uno tiene pagada una fracción redonda exacta (el BOG-1363-2025).
+     Vencidos sin liquidar, con la ventana de liquidación ya cerrada: 8. */
+  {
+    id: "solo-anticipo", ambito: "contrato", sev: 2,
+    nombre: "Lo pagado parece ser solo el anticipo",
+    corto: "Solo anticipo",
+    que: "El contrato ya venció, sigue abierto en SECOP y lo pagado es exactamente el pago adelantado o una fracción redonda del valor (10, 15, 20, 25, 30, 40 o 50 %) en un contrato de obra, interventoría o consultoría.",
+    porque: "Una cifra pagada tan exacta después del vencimiento suele ser el anticipo, no obra recibida. El anticipo es plata pública hasta que se amortiza con actas de obra, y si la obra no avanzó hay que ver qué pasó con él, si se activó la póliza y si la fiducia lo devolvió.",
+    fuente: "Fiscalía, Tomo III, «apropiación del anticipo» · Ley 1474 de 2011, art. 91 · caso BOG-1363-2025",
+    test: c => {
+      const v = +c.valor_del_contrato || 0, p = +c.valor_pagado || 0, a = +c.valor_de_pago_adelantado || 0;
+      const fin = String(c.fecha_de_fin_del_contrato || "").slice(0,10);
+      if (!fin || fin >= REGLAS_HOY() || v <= 0 || p <= 0 || !ESTADO_ABIERTO.test(c.estado_contrato || "")) return false;
+      if (a > 0 && Math.abs(p - a) <= a * 0.005) return true;
+      if (!TIPO_OBRA.test(c.tipo_de_contrato || "")) return false;
+      const r = p / v;
+      return [0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5].some(f => Math.abs(r - f) < 0.0005);
+    }
+  },
+  {
+    id: "sin-liquidar", ambito: "contrato", sev: 2,
+    nombre: "Vencido y sin liquidar",
+    corto: "Sin liquidar",
+    que: "Contrato de obra, interventoría o consultoría que debía liquidarse, cuya ventana de liquidación ya cerró, y que sigue en ejecución, modificado o suspendido en SECOP.",
+    porque: "En la liquidación se hace el corte de cuentas: cuánto se ejecutó, cuánto se pagó, qué se devuelve y qué garantías se amplían. Si la ventana pasa sin liquidar, la entidad pierde el momento de cobrar y las pólizas pueden vencerse sin haberse reclamado.",
+    fuente: "Ley 80 de 1993, art. 60 · Ley 1150 de 2007, art. 11 · caso BOG-1363-2025",
+    test: c => c.liquidaci_n === "Si" && !!c.fecha_fin_liquidacion &&
+               String(c.fecha_fin_liquidacion).slice(0,10) < REGLAS_HOY() &&
+               ESTADO_ABIERTO.test(c.estado_contrato || "") && TIPO_OBRA.test(c.tipo_de_contrato || "")
+  },
+
   /* ---------------- procesos ---------------- */
   {
     id: "cero-ofertas", ambito: "proceso", sev: 3,
@@ -615,6 +846,30 @@ const REGLAS = [
     porque: "Una convocatoria amplia que nadie responde suele indicar requisitos hechos a la medida de un proponente concreto.",
     fuente: "Open Contracting R019 · Fiscalía, «objeto acomodado»",
     test: p => (+p.proveedores_invitados || 0) >= 20 && (+p.respuestas_al_procedimiento || 0) <= 2
+  },
+
+  /* ---------- procesos: vínculos entre proponentes ----------
+     Estas dos se calculan aparte, con el botón «Buscar vínculos» de la
+     pestaña Procesos, porque necesitan consultar los proponentes de cada
+     proceso (hgi6-6wh3) y los consorcios donde ha estado cada empresa
+     (ceth-n4bn). Mientras no se corra esa búsqueda, no marcan nada. */
+  {
+    id: "competidores-asociados", ambito: "proceso", sev: 2, vinculos: true,
+    nombre: "Competidores que han sido socios",
+    corto: "Competidores socios",
+    que: "Al menos dos de los proponentes del proceso tienen integrantes que han estado juntos en otro consorcio o unión temporal registrado en SECOP II.",
+    porque: "Que dos empresas sean socias en un proceso y compitan en otro es legal. Pero es el patrón que deja la colusión entre oferentes: varias ofertas del mismo grupo para aparentar competencia, o una que se presenta sin intención de ganar. En el caso BOG-1363-2025 las empresas del ganador y las de un competidor habían estado juntas en 36 consorcios.",
+    fuente: "Ley 1340 de 2009 · Superintendencia de Industria y Comercio, colusión en licitaciones · Open Contracting, banderas de colusión · caso BOG-1363-2025",
+    test: p => !!p.__vinc && p.__vinc.pares.length > 0
+  },
+  {
+    id: "menos-competencia", ambito: "proceso", sev: 1, vinculos: true,
+    nombre: "Menos competencia que la vez anterior",
+    corto: "Menos ofertas",
+    que: "Un proceso anterior de la misma cuenta de la ESAP, con un objeto casi igual y un presupuesto parecido, recibió al menos ocho ofertas, y este recibió un 35 % o menos de esa cantidad.",
+    porque: "Si el mercado era el mismo, la caída en la competencia tiene que explicarse por algo: requisitos más exigentes, plazos más cortos, un solo lote en vez de varios, o un pliego que deja a pocos por fuera. En el caso BOG-1363-2025 el mantenimiento de sedes recibió 24 ofertas en 2023 y 4 en 2025.",
+    fuente: "Open Contracting R018 · Fiscalía, «direccionamiento» · caso BOG-1363-2025",
+    test: p => !!p.__vinc && !!p.__vinc.antes
   }
 ];
 
@@ -631,6 +886,7 @@ const SEV = {
 const BASE = "https://www.datos.gov.co/resource/";
 const DS_CONTRATOS = "jbjy-vk9h";
 const DS_PROCESOS  = "p6dx-8zbt";
+const DS_MODIF     = "u8cx-r425";   // Modificaciones a contratos: historial de prórrogas y adiciones
 
 // Cuentas de la ESAP en SECOP II, verificadas por NIT.
 // Se filtra por NIT y no por nombre a propósito: buscar el texto "ESAP"
@@ -681,6 +937,10 @@ const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt
 const sq  = s => String(s ?? "").replace(/'/g, "''");
 const iso = d => d.toISOString().slice(0,10);
 const hoy = () => new Date();
+const DIA = 86400000;
+const tDia = s => s ? Date.parse(String(s).slice(0,10) + "T00:00:00Z") : NaN;
+const fDia = t => isFinite(t) ? new Date(t).toISOString().slice(0,10).split("-").reverse().join("/") : "—";
+const nitsIn = (nits = state.nits) => "nit_entidad in(" + nits.map(n => "'"+n+"'").join(",") + ")";
 const masDias = (d,n) => { const x = new Date(d); x.setDate(x.getDate()+n); return x; };
 const fFecha = s => s ? String(s).slice(0,10).split("-").reverse().join("/") : "—";
 const MESES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
@@ -697,12 +957,22 @@ function maskDoc(doc, tipo){
 function lsGet(k, def){ try { const v = localStorage.getItem(k); return v==null ? def : JSON.parse(v); } catch(e){ return def; } }
 function lsSet(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
 
-async function soql(dataset, params, reintento = true){
+const memoria = new Map();
+const MEMORIA_MS = 5 * 60 * 1000;
+function soql(dataset, params){
   const u = new URL(BASE + dataset + ".json");
   for (const [k,v] of Object.entries(params)) if (v !== undefined && v !== null && v !== "") u.searchParams.set(k, v);
+  const clave = u.toString(), m = memoria.get(clave);
+  if (m && Date.now() - m.t < MEMORIA_MS) return m.p;
+  const p = pedir(clave).catch(e => { memoria.delete(clave); throw e; });
+  memoria.set(clave, { t: Date.now(), p });
+  return p;
+}
+async function pedir(url, reintento = true){
+  const u = new URL(url);
   try {
     const r = await fetch(u.toString(), { headers:{ "Accept":"application/json" } });
-    if (r.status === 429 && reintento) { await new Promise(s => setTimeout(s, 1500)); return soql(dataset, params, false); }
+    if (r.status === 429 && reintento) { await new Promise(s => setTimeout(s, 1500)); return pedir(url, false); }
     if (!r.ok) {
       let d = ""; try { d = (await r.json()).message || ""; } catch(e){ d = await r.text().catch(()=>""); }
       throw new Error("SECOP respondió " + r.status + (d ? ": " + d.slice(0,200) : ""));
@@ -710,7 +980,7 @@ async function soql(dataset, params, reintento = true){
     return r.json();
   } catch(e){
     if (reintento && /NetworkError|Failed to fetch/i.test(e.message)) {
-      await new Promise(s => setTimeout(s, 1200)); return soql(dataset, params, false);
+      await new Promise(s => setTimeout(s, 1200)); return pedir(url, false);
     }
     throw e;
   }
@@ -741,7 +1011,7 @@ if (!watch) {
 watch.contratos ||= {}; watch.personas ||= {}; watch.procesos ||= {};
 
 function whereContratos(extra){
-  const p = ["nit_entidad in(" + state.nits.map(n => "'"+n+"'").join(",") + ")"];
+  const p = [nitsIn()];
   if (state.desde) p.push("fecha_de_firma >= '" + state.desde + "T00:00:00'");
   if (state.hasta) p.push("fecha_de_firma <= '" + state.hasta + "T23:59:59'");
   if (state.modalidad) p.push("modalidad_de_contratacion = '" + sq(state.modalidad) + "'");
@@ -864,6 +1134,263 @@ function evaluarProceso(p){
 const tagsHTML = fl => !fl.length ? '<span class="flag ok">sin señales</span>'
   : '<div class="tags">' + fl.map(f => '<span class="tag '+SEV[f.sev].clase+'" title="'+esc(f.que)+'">'+esc(f.corto)+'</span>').join("") + "</div>";
 
+
+/* ============================================================
+   Historial de modificaciones (conjunto u8cx-r425)
+   ------------------------------------------------------------
+   SECOP guarda una fila por cada versión de cada modificación:
+   borradores, rechazos, aprobaciones. Solo sirven dos: la versión 1,
+   que conserva el plazo y el valor de antes, y las publicadas, que
+   traen el plazo y el valor de después. Se piden solo esas.
+   ============================================================ */
+const SEL_MODIF = "id_contrato,identificador_modificacion,estado_modificacion,numero_version," +
+  "fecha_creacion,fecha_de_aprobacion,fecha_fin_contrato,valor_modificacion,proposito_modificacion";
+const histCache = new Map();          // id_contrato -> filas crudas
+const LOTE_HIST = 40, MAX_HIST = 800;
+
+// Plazo original = terminación actual menos los días adicionados.
+function finOriginal(c){
+  const f = tDia(c && c.fecha_de_fin_del_contrato), d = +(c && c.dias_adicionados) || 0;
+  return isNaN(f) ? NaN : f - d * DIA;
+}
+
+function resumirHistorial(filas, c){
+  const g = new Map();
+  for (const r of filas){
+    const k = r.identificador_modificacion; if (!k) continue;
+    const m = g.get(k) || { id:k, v1:null, pub:[] };
+    if (+r.numero_version === 1 && !m.v1) m.v1 = r;
+    if (r.estado_modificacion === "Publicado") m.pub.push(r);
+    g.set(k, m);
+  }
+  const mods = [...g.values()].map(m => {
+    const base = m.pub.length ? m.pub : (m.v1 ? [m.v1] : []);
+    const fechas = [m.v1, ...m.pub].filter(Boolean).map(r => tDia(r.fecha_creacion)).filter(isFinite);
+    const aprob = m.pub.map(r => tDia(r.fecha_de_aprobacion)).filter(isFinite);
+    const fines = m.pub.map(r => tDia(r.fecha_fin_contrato)).filter(isFinite);
+    const prop = base.find(r => r.proposito_modificacion && !/^no definido$/i.test(r.proposito_modificacion));
+    return {
+      id: m.id, publicada: m.pub.length > 0,
+      estado: m.pub.length ? "Publicado" : (m.v1 ? m.v1.estado_modificacion : "—"),
+      creada: fechas.length ? Math.min(...fechas) : NaN,
+      aprobada: aprob.length ? Math.max(...aprob) : NaN,
+      finAnt: m.v1 ? tDia(m.v1.fecha_fin_contrato) : NaN,
+      finDes: fines.length ? Math.max(...fines) : NaN,
+      valAnt: m.v1 ? +m.v1.valor_modificacion || NaN : NaN,
+      valDes: m.pub.length ? Math.max(...m.pub.map(r => +r.valor_modificacion || 0)) : NaN,
+      proposito: prop ? prop.proposito_modificacion : ""
+    };
+  }).sort((a,b) => (a.creada || 0) - (b.creada || 0));
+
+  const pubs = mods.filter(m => m.publicada);
+  pubs.forEach((m, i) => {
+    if (isNaN(m.finAnt)) m.finAnt = i ? pubs[i-1].finDes : finOriginal(c);
+    if (isNaN(m.valAnt) && i) m.valAnt = pubs[i-1].valDes;
+    m.prorroga = isFinite(m.finAnt) && isFinite(m.finDes) && m.finDes > m.finAnt;
+    m.diasExtra = m.prorroga ? Math.round((m.finDes - m.finAnt) / DIA) : 0;
+    // días entre la creación y el vencimiento que había: 0 = el mismo día
+    m.margen = m.prorroga && isFinite(m.creada) ? Math.round((m.finAnt - m.creada) / DIA) : null;
+    m.alVencimiento = m.margen !== null && m.margen >= -1 && m.margen <= 2;
+  });
+  const v0 = (pubs.find(m => m.valAnt > 0) || {}).valAnt;
+  const vf = pubs.length ? Math.max(...pubs.map(m => m.valDes || 0)) : NaN;
+  return {
+    mods, publicadas: pubs.length,
+    prorrogas: pubs.filter(m => m.prorroga).length,
+    alVencimiento: pubs.filter(m => m.alVencimiento).length,
+    valorInicial: v0 || NaN, valorFinal: vf,
+    adicionPct: v0 > 0 && vf > v0 ? (vf - v0) / v0 : 0
+  };
+}
+
+// Contratos que vale la pena consultar: los que tienen días adicionados o figuran modificados.
+const tieneModificaciones = c => (+c.dias_adicionados || 0) > 0 || /modific/i.test(c.estado_contrato || "");
+
+async function traerHistoriales(contratos, alAvanzar){
+  const ids = [...new Set(contratos.map(c => c.id_contrato).filter(id => id && !histCache.has(id)))].slice(0, MAX_HIST);
+  const lotes = [];
+  for (let i = 0; i < ids.length; i += LOTE_HIST) lotes.push(ids.slice(i, i + LOTE_HIST));
+  let hechos = 0;
+  const obrero = async () => {
+    while (lotes.length){
+      const lote = lotes.shift();
+      const filas = await soql(DS_MODIF, { "$select":SEL_MODIF, "$limit":5000,
+        "$where":"id_contrato in(" + lote.map(id => "'"+sq(id)+"'").join(",") + ") AND (estado_modificacion='Publicado' OR numero_version='1')" });
+      const por = new Map(lote.map(id => [id, []]));
+      for (const r of filas) por.get(r.id_contrato)?.push(r);
+      for (const [id, rs] of por) histCache.set(id, rs);
+      hechos += lote.length;
+      if (alAvanzar) alAvanzar(hechos, ids.length);
+    }
+  };
+  await Promise.all([obrero(), obrero(), obrero()]);
+  for (const c of contratos){
+    const rs = histCache.get(c.id_contrato);
+    if (rs) c.__hist = resumirHistorial(rs, c);
+  }
+}
+
+// Consulta el historial en segundo plano y vuelve a pintar cuando termina.
+// "gen" evita que una consulta vieja pinte encima de una nueva.
+async function completarConHistorial(rows, avisoEl, gen, genActual, repintar){
+  const cand = rows.filter(tieneModificaciones);
+  if (!cand.length){ avisoEl.innerHTML = ""; return; }
+  const aviso = (h, t) => { if (gen === genActual()) avisoEl.innerHTML =
+    '<div class="note info"><span class="spin"></span>Revisando el historial de modificaciones de ' + fmtInt(t) +
+    ' contratos con prórrogas o modificaciones (' + fmtInt(h) + ' de ' + fmtInt(t) + '). Las reglas de prórrogas encadenadas, prórroga al vencimiento y adición cerca del tope aparecen cuando termine.</div>'; };
+  aviso(0, Math.min(cand.length, MAX_HIST));
+  try {
+    await traerHistoriales(cand, aviso);
+    if (gen !== genActual()) return;
+    avisoEl.innerHTML = cand.length > MAX_HIST
+      ? '<div class="note">Se revisó el historial de los primeros ' + fmtInt(MAX_HIST) + ' contratos con modificaciones de ' + fmtInt(cand.length) + '. Acota las fechas para revisar el resto.</div>' : "";
+    repintar();
+  } catch(e){
+    if (gen === genActual()) avisoEl.innerHTML = '<div class="note err">No se pudo consultar el historial de modificaciones: ' + esc(e.message) + '. Las demás reglas sí se aplicaron.</div>';
+  }
+}
+
+function historialHTML(h, c){
+  if (!h.mods.length) return '<div class="hist"><h4>Historial de modificaciones</h4><p class="sub">SECOP no registra modificaciones para este contrato.</p></div>';
+  const filas = h.mods.map((m, i) => {
+    const plazo = m.prorroga
+      ? fDia(m.finAnt) + " → " + fDia(m.finDes) + " (+" + fmtInt(m.diasExtra) + " d)"
+      : (isFinite(m.finDes) ? "sin cambio (" + fDia(m.finDes) + ")" : "—");
+    const valor = m.valAnt > 0 && m.valDes > m.valAnt
+      ? fmtCOP(m.valAnt) + " → " + fmtCOP(m.valDes) + " (+" + ((m.valDes - m.valAnt) / m.valAnt * 100).toFixed(1).replace(".", ",") + " %)"
+      : "sin cambio";
+    const marca = m.alVencimiento ? ' <span class="tag media" title="Creada ' + (m.margen === 0 ? "el mismo día del" : m.margen > 0 ? m.margen + " día(s) antes del" : "un día después del") + ' vencimiento">al vencimiento</span>' : "";
+    return '<tr><td class="num" data-l="#">' + (i + 1) + '</td><td class="mono" data-l="Modificación">' + esc(m.id) +
+      '</td><td class="mono" data-l="Creada">' + fDia(m.creada) + '</td><td class="mono" data-l="Aprobada">' + fDia(m.aprobada) +
+      '</td><td data-l="Plazo">' + (m.publicada ? plazo + marca : "—") + '</td><td data-l="Valor">' + (m.publicada ? valor : "—") +
+      '</td><td data-l="Estado">' + esc(m.estado) + "</td></tr>" +
+      (m.proposito ? '<tr class="prop-row"><td></td><td colspan="6" class="prop">' + esc(m.proposito) + "</td></tr>" : "");
+  }).join("");
+  const res = [fmtInt(h.publicadas) + " publicada" + (h.publicadas === 1 ? "" : "s"),
+    fmtInt(h.prorrogas) + " prórroga" + (h.prorrogas === 1 ? "" : "s"),
+    h.alVencimiento ? fmtInt(h.alVencimiento) + " al vencimiento" : "",
+    h.adicionPct > 0 ? "+" + (h.adicionPct * 100).toFixed(1).replace(".", ",") + " % sobre el valor inicial" : ""].filter(Boolean).join(" · ");
+  const fl = REGLAS.filter(x => x.historial && x.test(c));
+  return '<div class="hist"><h4>Historial de modificaciones</h4>' +
+    (fl.length ? '<div class="note">' + fl.map(f => "<b>" + esc(f.nombre) + ".</b> " + esc(f.que)).join("<br>") + "</div>" : "") +
+    '<p class="sub">' + res +
+    '. Fechas tal como las registra SECOP II en el conjunto «Modificaciones a contratos»; suelen correr un día frente al documento firmado, y el documento manda.</p>' +
+    '<div class="tw"><table><thead><tr><th class="num">#</th><th>Modificación</th><th>Creada</th><th>Aprobada</th><th>Plazo</th><th>Valor</th><th>Estado</th></tr></thead><tbody>' +
+    filas + "</tbody></table></div></div>";
+}
+
+/* ============================================================
+   Carga del contratista
+   ------------------------------------------------------------
+   Responde una pregunta: ¿qué más tenía entre manos este
+   contratista cuando firmó con la ESAP? Busca en todas las
+   entidades del país, no solo en la ESAP. Si el contratista es
+   un consorcio o una unión temporal, lo abre en sus integrantes
+   (conjunto "Grupos de Proveedores", ceth-n4bn) y busca los
+   contratos de cualquier otro consorcio donde esté alguno de
+   ellos. El valor "ponderado" cuenta solo la parte que les toca
+   según su participación en cada consorcio.
+   Los documentos de personas naturales se usan para buscar y
+   nunca se muestran.
+   ============================================================ */
+const DS_GRUPOS = "ceth-n4bn";
+const SEL_CARGA = "nombre_entidad,referencia_del_contrato,id_contrato,proveedor_adjudicado,codigo_proveedor," +
+  "documento_proveedor,valor_del_contrato,valor_pagado,estado_contrato,fecha_de_firma,fecha_de_fin_del_contrato,tipo_de_contrato";
+const cargaCache = new Map();
+
+async function integrantesDe(r){
+  if (!r.codigo_proveedor) return { grupo:false, miembros:[] };
+  const filas = await soql(DS_GRUPOS, { "$select":"codigo_grupo,nombre_grupo,nombre_participante,nit_participante,participacion,es_lider_del_grupo,fecha_creaci_n_grupo",
+    "$where":"codigo_grupo='" + sq(r.codigo_proveedor) + "'", "$limit":50 });
+  if (!filas.length) return { grupo:false, miembros:[] };
+  return { grupo:true, creado: filas[0].fecha_creaci_n_grupo,
+    miembros: filas.map(f => ({ nombre:f.nombre_participante, nit:f.nit_participante, part:+f.participacion || 0, lider: /verdadero|true|si/i.test(f.es_lider_del_grupo || "") })) };
+}
+
+async function calcularCarga(r){
+  if (cargaCache.has(r.id_contrato)) return cargaCache.get(r.id_contrato);
+  const info = await integrantesDe(r);
+  const docs = info.grupo ? info.miembros.map(m => m.nit).filter(Boolean)
+                          : [r.documento_proveedor].filter(d => d && !/no definido/i.test(d));
+  if (!docs.length) return { info, sinDatos:true };
+  // todos los consorcios y uniones temporales donde aparece alguno de ellos
+  const grupos = await soql(DS_GRUPOS, { "$select":"codigo_grupo,nit_participante,participacion",
+    "$where":"nit_participante in(" + docs.map(d => "'"+sq(d)+"'").join(",") + ")", "$limit":5000 });
+  const parte = {};                                  // codigo_grupo -> suma de participación de ellos
+  for (const g of grupos) parte[g.codigo_grupo] = (parte[g.codigo_grupo] || 0) + (+g.participacion || 0) / 100;
+  const codigos = Object.keys(parte);
+  const lotes = [];
+  for (let i = 0; i < codigos.length; i += 80) lotes.push("codigo_proveedor in(" + codigos.slice(i, i+80).map(c => "'"+c+"'").join(",") + ")");
+  lotes.push("documento_proveedor in(" + docs.map(d => "'"+sq(d)+"'").join(",") + ")");
+  const resp = await Promise.all(lotes.map(w => soql(DS_CONTRATOS, { "$select":SEL_CARGA, "$where":w, "$limit":5000 })));
+  const unicos = new Map();
+  for (const c of resp.flat()) {
+    if (!c.id_contrato || c.id_contrato === r.id_contrato) continue;
+    const prev = unicos.get(c.id_contrato);
+    if (!prev || (+c.valor_del_contrato || 0) > (+prev.valor_del_contrato || 0)) unicos.set(c.id_contrato, c);
+  }
+  const todos = [...unicos.values()].filter(c => !/cancelad/i.test(c.estado_contrato || "") && (+c.valor_del_contrato || 0) < UMBRAL_IMPOSIBLE);
+  const cuota = c => docs.includes(c.documento_proveedor) ? 1 : Math.min(1, parte[c.codigo_proveedor] || 0);
+  const D = tDia(r.fecha_de_firma), finEste = tDia(r.fecha_de_fin_del_contrato);
+  const vigentes = isFinite(D) ? todos.filter(c => tDia(c.fecha_de_firma) <= D && (!isFinite(tDia(c.fecha_de_fin_del_contrato)) || tDia(c.fecha_de_fin_del_contrato) >= D)) : [];
+  const despues = isFinite(D) ? todos.filter(c => tDia(c.fecha_de_firma) > D && (!isFinite(finEste) || tDia(c.fecha_de_firma) <= finEste)) : [];
+  const suspendidos = todos.filter(c => /suspend/i.test(c.estado_contrato || ""));
+  const previos = isFinite(D) ? todos.filter(c => tDia(c.fecha_de_firma) < D) : todos;
+  const mayorPrevio = previos.reduce((m, c) => Math.max(m, +c.valor_del_contrato || 0), 0);
+  const suma = (a, f = () => 1) => a.reduce((s, c) => s + (+c.valor_del_contrato || 0) * f(c), 0);
+  const res = { info, docs, nGrupos: codigos.length, nContratos: todos.length,
+    vigentes: vigentes.sort((a,b) => b.valor_del_contrato - a.valor_del_contrato), valorVig: suma(vigentes), valorVigPond: suma(vigentes, cuota),
+    despues: despues.sort((a,b) => b.valor_del_contrato - a.valor_del_contrato), valorDesp: suma(despues),
+    suspendidos, mayorPrevio, cuota };
+  cargaCache.set(r.id_contrato, res);
+  return res;
+}
+
+function cargaHTML(k, r){
+  const val = +r.valor_del_contrato || 0;
+  if (k.sinDatos) return '<div class="hist"><h4>Carga del contratista</h4><p class="sub">El contrato no trae un documento del contratista con el que buscar.</p></div>';
+  const fila = c => "<tr><td>" + esc((c.nombre_entidad || "").slice(0, 60)) + '</td><td class="mono">' + esc(c.referencia_del_contrato || "—") +
+    "</td><td>" + esc(c.proveedor_adjudicado || "—") + '</td><td class="num">' + fmtCOP(c.valor_del_contrato) +
+    '</td><td class="num">' + Math.round(k.cuota(c) * 100) + ' %</td><td>' + esc(c.estado_contrato || "—") + '</td><td class="mono">' + fFecha(c.fecha_de_fin_del_contrato) + "</td></tr>";
+  const tabla = (a, n) => !a.length ? "" : '<div class="tw" style="margin-top:8px"><table><thead><tr><th>Entidad</th><th>Referencia</th><th>Contratista</th><th class="num">Valor</th><th class="num">Parte</th><th>Estado</th><th>Termina</th></tr></thead><tbody>' +
+    a.slice(0, n).map(fila).join("") + "</tbody></table></div>" + (a.length > n ? '<p class="sub" style="margin-top:6px">Y ' + fmtInt(a.length - n) + " más.</p>" : "");
+  const quien = k.info.grupo
+    ? "Es un consorcio o unión temporal" + (k.info.creado ? " registrado en SECOP el " + fFecha(k.info.creado) : "") + ". Lo forman: " +
+      k.info.miembros.map(m => esc(m.nombre) + " (" + m.part + " %" + (m.lider ? ", líder" : "") + ")").join(", ") +
+      ". Entre todos aparecen en " + fmtInt(k.nGrupos) + " consorcios y uniones temporales."
+    : "Contratista individual.";
+  const relacion = k.mayorPrevio > 0 ? " El contrato más grande que tenía antes de este era de " + fmtCOP(k.mayorPrevio) +
+    (val > k.mayorPrevio ? ": este es " + (val / k.mayorPrevio).toFixed(1).replace(".", ",") + " veces más grande." : ".") : " No aparecen contratos anteriores.";
+  return '<div class="hist"><h4>Carga del contratista</h4>' +
+    '<p class="sub">' + quien + relacion + "</p>" +
+    '<div class="note' + (k.vigentes.length ? "" : " info") + '"><b>El día que firmó este contrato tenía ' + fmtInt(k.vigentes.length) + " contrato" + (k.vigentes.length === 1 ? "" : "s") +
+    " vigentes con otras entidades por " + fmtCOP(k.valorVig) + "</b>" + (k.info.grupo ? ", de los cuales le correspondían unos " + fmtCOP(k.valorVigPond) + " según su participación" : "") +
+    ". Durante el plazo de este contrato firmó " + fmtInt(k.despues.length) + " más por " + fmtCOP(k.valorDesp) + "." +
+    (k.suspendidos.length ? " " + fmtInt(k.suspendidos.length) + " de sus contratos figuran suspendidos." : "") + "</div>" +
+    tabla(k.vigentes, 8) +
+    (k.despues.length ? '<p class="sub" style="margin-top:12px">Firmados durante la ejecución de este contrato:</p>' + tabla(k.despues, 5) : "") +
+    '<p class="sub" style="margin-top:10px">Sirve para ver si el contrato le quedaba grande por carga simultánea, no por tamaño. No reemplaza el cálculo de capacidad residual del pliego, que se hace con los documentos del RUP. El valor pagado que reporta SECOP muchas veces no se actualiza, por eso aquí no se usa para juzgar el avance.</p></div>';
+}
+
+/* ============================================================
+   Salud de la fuente
+   ------------------------------------------------------------
+   datos.gov.co recarga completo el conjunto de contratos una vez
+   al día. Mientras lo hace, puede quedar con unas pocas filas y el
+   monitor mostraría "cero contratos" como si fuera un dato.
+   ============================================================ */
+const MIN_FILAS_FUENTE = 200000;
+async function verificarFuente(){
+  try {
+    const r = await soql(DS_CONTRATOS, { "$select":"count(*) as n" });
+    const n = +(r && r[0] && r[0].n) || 0;
+    $("#avisoFuente").innerHTML = n > 0 && n < MIN_FILAS_FUENTE
+      ? '<div class="note err"><b>La fuente de SECOP está incompleta en este momento.</b> El conjunto de contratos de todo el país tiene ahora ' + fmtInt(n) +
+        ' registros, cuando normalmente tiene millones. Suele pasar mientras datos.gov.co lo recarga, lo que hace una vez al día. Lo que ves hoy aquí no es confiable: vuelve a consultar en unas horas antes de sacar conclusiones.</div>'
+      : "";
+  } catch(e){ /* si no se puede verificar, no se asusta a nadie */ }
+}
+
 /* ============================================================
    Tablas
    ============================================================ */
@@ -871,12 +1398,13 @@ const SEL_CONTRATO = ["nit_entidad","referencia_del_contrato","id_contrato","fec
   "fecha_de_inicio_del_contrato","fecha_de_fin_del_contrato","proveedor_adjudicado","documento_proveedor",
   "valor_del_contrato","valor_pagado","modalidad_de_contratacion","tipo_de_contrato","estado_contrato",
   "objeto_del_contrato","nombre_supervisor","nombre_ordenador_del_gasto","urlproceso","origen_de_los_recursos",
-  "tipodocproveedor","duraci_n_del_contrato","valor_pendiente_de_pago","valor_de_pago_adelantado","dias_adicionados"].join(",");
+  "tipodocproveedor","duraci_n_del_contrato","valor_pendiente_de_pago","valor_de_pago_adelantado","dias_adicionados","codigo_proveedor",
+  "liquidaci_n","fecha_fin_liquidacion"].join(",");
 
 const SEL_PROCESO = "entidad,nit_entidad,referencia_del_proceso,descripci_n_del_procedimiento,precio_base," +
   "modalidad_de_contratacion,estado_del_procedimiento,adjudicado,nombre_del_proveedor,valor_total_adjudicacion," +
   "proveedores_invitados,respuestas_al_procedimiento,tipo_de_contrato,urlproceso,fase,fecha_de_publicacion_del," +
-  "fecha_adjudicacion,fecha_de_recepcion_de";
+  "fecha_adjudicacion,fecha_de_recepcion_de,id_del_proceso,nombre_del_procedimiento";
 
 const refBase = r => String(r.referencia_del_proceso || "").replace(/\s*\(.*$/, "").trim();
 
@@ -1003,10 +1531,27 @@ function abrirFicha(id){
     (fl.length ? '<div class="note"><b>Banderas rojas de este contrato</b><br>' +
       fl.map(f => "<b>" + esc(f.nombre) + ".</b> " + esc(f.que) + " " + esc(f.porque)).join("<br>") + "</div>" : "") +
     '<dl class="kv">' + kv.map(([k,v]) => "<dt>"+esc(k)+"</dt><dd>"+esc(v)+"</dd>").join("") + "</dl>" +
+    '<div id="fichaHist"><div class="hist"><h4>Historial de modificaciones</h4><p class="loading"><span class="spin"></span>Consultando SECOP…</p></div></div>' +
+    '<div id="fichaCarga"><div class="hist"><h4>Carga del contratista</h4><p class="sub">Qué otros contratos tenía con otras entidades del país cuando firmó este, y cuáles firmó mientras lo ejecutaba.</p>' +
+    '<button class="btn-ghost" type="button" id="btnCarga">Revisar carga del contratista</button></div></div>' +
     (url ? '<p style="margin-top:16px;font-size:12.5px">Expediente oficial: <a href="'+esc(url)+'" target="_blank" rel="noopener">'+esc(url)+"</a></p>" : "") +
     '<div class="sheet-act"><button class="btn" onclick="window.print()">Imprimir o guardar en PDF</button>' +
     '<button class="btn-ghost" data-close="1">Cerrar</button></div>';
   $("#sheet").classList.add("on");
+  const cid = r.id_contrato;
+  $("#btnCarga")?.addEventListener("click", () => {
+    const el = $("#fichaCarga");
+    el.innerHTML = '<div class="hist"><h4>Carga del contratista</h4><p class="loading"><span class="spin"></span>Buscando sus contratos en todas las entidades…</p></div>';
+    calcularCarga(r).then(k => { if ($("#sheet").classList.contains("on") && fichaIndex.get(id) === r) $("#fichaCarga").innerHTML = cargaHTML(k, r); })
+      .catch(e => { $("#fichaCarga").innerHTML = '<div class="hist"><h4>Carga del contratista</h4><div class="note err">No se pudo consultar: ' + esc(e.message) + "</div></div>"; });
+  });
+  if (!cid) { $("#fichaHist").innerHTML = ""; return; }
+  traerHistoriales([r]).then(() => {
+    const el = $("#fichaHist");
+    const extra = REGLAS.filter(x => x.historial && x.test(r) && !(r.__flags || []).includes(x));
+    if (extra.length) r.__flags = (r.__flags || []).concat(extra).sort((a,b) => b.sev - a.sev);
+    if (el && $("#sheet").classList.contains("on") && fichaIndex.get(id) === r) el.innerHTML = historialHTML(r.__hist, r);
+  }).catch(e => { const el = $("#fichaHist"); if (el) el.innerHTML = '<div class="hist"><h4>Historial de modificaciones</h4><div class="note err">No se pudo consultar: ' + esc(e.message) + "</div></div>"; });
 }
 
 function tile(k, v, n, meter, clase){
@@ -1022,7 +1567,7 @@ async function cargarNovedades(){
   const cont = $("#novTabla"), intro = $("#novIntro");
   try {
     const desde = iso(masDias(hoy(), -VENTANA_NOVEDADES_DIAS));
-    const w = "nit_entidad in(" + state.nits.map(n=>"'"+n+"'").join(",") + ") AND fecha_de_firma >= '" + desde + "T00:00:00'";
+    const w = nitsIn() + " AND fecha_de_firma >= '" + desde + "T00:00:00'";
     const rows = await soql(DS_CONTRATOS, { "$select":SEL_CONTRATO, "$where":w, "$order":"fecha_de_firma DESC", "$limit":5000 });
     const ctx = construirContexto(rows);
     for (const r of rows) r.__flags = evaluarContrato(r, ctx);
@@ -1110,7 +1655,7 @@ let nvmDias = 30, nvmSel = null, nvmMin = null, nvmMax = null;
 let cacheNvm = [], cacheNvmTodos = [];
 
 function whereNuevos(){
-  const p = ["nit_entidad in(" + state.nits.map(n => "'"+n+"'").join(",") + ")",
+  const p = [nitsIn(),
              "fecha_de_firma >= '" + iso(masDias(hoy(), -nvmDias)) + "T00:00:00'",
              "fecha_de_firma <= '" + iso(hoy()) + "T23:59:59'"];
   if (state.modalidad) p.push("modalidad_de_contratacion = '" + sq(state.modalidad) + "'");
@@ -1210,52 +1755,59 @@ $("#csvNvm").addEventListener("click", () => downloadCSV("nuevos-por-monto-esap.
 /* ============================================================
    BANDERAS ROJAS
    ============================================================ */
+let genBan = 0, datosBan = null;
 async function cargarBanderas(){
-  const cont = $("#banReglas");
+  const cont = $("#banReglas"), gen = ++genBan;
   cont.innerHTML = '<div class="loading"><span class="spin"></span>Evaluando reglas…</div>';
+  $("#banHist").innerHTML = "";
   try {
-    const nitsIn = "nit_entidad in(" + state.nits.map(n=>"'"+n+"'").join(",") + ")";
     const [contratos, huerfanos, procesos] = await Promise.all([
       soql(DS_CONTRATOS, { "$select":SEL_CONTRATO, "$where":whereContratos(), "$order":"fecha_de_firma DESC", "$limit":3000 }),
-      soql(DS_CONTRATOS, { "$select":SEL_CONTRATO, "$where":nitsIn + " AND fecha_de_firma IS NULL", "$limit":400 }),
-      soql(DS_PROCESOS,  { "$select":SEL_PROCESO, "$where":nitsIn + (state.desde ? " AND fecha_de_publicacion_del >= '"+state.desde+"T00:00:00'" : ""),
+      soql(DS_CONTRATOS, { "$select":SEL_CONTRATO, "$where":nitsIn() + " AND fecha_de_firma IS NULL", "$limit":400 }),
+      soql(DS_PROCESOS,  { "$select":SEL_PROCESO, "$where":nitsIn() + (state.desde ? " AND fecha_de_publicacion_del >= '"+state.desde+"T00:00:00'" : ""),
                            "$order":"fecha_de_publicacion_del DESC", "$limit":1500 })
     ]);
-    const todos = contratos.concat(huerfanos);
-    const ctx = construirContexto(contratos);
-    for (const c of todos) c.__flags = evaluarContrato(c, ctx);
+    if (gen !== genBan) return;
+    datosBan = { todos: contratos.concat(huerfanos), procesos, ctx: construirContexto(contratos) };
     for (const p of procesos) p.__flags = evaluarProceso(p);
-    indexar(todos);
-
-    banderas = [];
-    for (const c of todos) if (c.__flags.length) banderas.push({ tipo:"contrato", item:c, reglas:c.__flags });
-    for (const p of procesos) if (p.__flags.length) banderas.push({ tipo:"proceso", item:p, reglas:p.__flags });
-    banderas.sort((a,b) => b.reglas[0].sev - a.reglas[0].sev ||
-      String(b.item.fecha_de_firma || b.item.fecha_de_publicacion_del || "").localeCompare(String(a.item.fecha_de_firma || a.item.fecha_de_publicacion_del || "")));
-
-    const porSev = { 3:0, 2:0, 1:0 };
-    for (const b of banderas) porSev[b.reglas[0].sev]++;
-    $("#banTiles").innerHTML =
-      tile("Críticas", fmtInt(porSev[3]), "exigen revisión inmediata", undefined, porSev[3] ? "crit" : "") +
-      tile("Altas", fmtInt(porSev[2]), "merecen abrir el expediente", undefined, porSev[2] ? "alta" : "") +
-      tile("Medias", fmtInt(porSev[1]), "señales de transparencia", undefined, porSev[1] ? "media" : "") +
-      tile("Registros revisados", fmtInt(todos.length + procesos.length), fmtInt(todos.length)+" contratos y "+fmtInt(procesos.length)+" procesos");
-
-    const conteo = {};
-    for (const b of banderas) for (const r of b.reglas) conteo[r.id] = (conteo[r.id]||0) + 1;
-    cont.innerHTML = REGLAS.filter(r => conteo[r.id]).sort((a,b) => b.sev - a.sev || conteo[b.id]-conteo[a.id]).map(r =>
-      '<div class="regla" data-regla="'+r.id+'" style="cursor:pointer">'+
-      '<h4><span class="flag '+SEV[r.sev].clase+'">'+SEV[r.sev].nombre+"</span> "+esc(r.nombre)+
-      '<span class="n">'+fmtInt(conteo[r.id])+" registro"+(conteo[r.id]===1?"":"s")+"</span></h4>"+
-      '<div class="meta">'+esc(r.ambito === "contrato" ? "Contratos" : "Procesos")+" · "+esc(r.fuente)+"</div>"+
-      "<p>"+esc(r.que)+"</p><p style='color:var(--ink-muted)'>"+esc(r.porque)+"</p></div>").join("")
-      || '<div class="empty">Ninguna regla se activó con estos filtros.</div>';
-
-    const cb = $("#cBan");
-    cb.textContent = banderas.length;
-    cb.classList.toggle("hot", porSev[3] > 0);
-    pintarBanderas();
+    indexar(datosBan.todos);
+    evaluarBanderas();
+    completarConHistorial(datosBan.todos, $("#banHist"), gen, () => genBan, evaluarBanderas);
   } catch(e){ errBox(cont, e); }
+}
+
+function evaluarBanderas(){
+  const { todos, procesos, ctx } = datosBan, cont = $("#banReglas");
+  for (const c of todos) c.__flags = evaluarContrato(c, ctx);
+
+  banderas = [];
+  for (const c of todos) if (c.__flags.length) banderas.push({ tipo:"contrato", item:c, reglas:c.__flags });
+  for (const p of procesos) if (p.__flags.length) banderas.push({ tipo:"proceso", item:p, reglas:p.__flags });
+  banderas.sort((a,b) => b.reglas[0].sev - a.reglas[0].sev ||
+    String(b.item.fecha_de_firma || b.item.fecha_de_publicacion_del || "").localeCompare(String(a.item.fecha_de_firma || a.item.fecha_de_publicacion_del || "")));
+
+  const porSev = { 3:0, 2:0, 1:0 };
+  for (const b of banderas) porSev[b.reglas[0].sev]++;
+  $("#banTiles").innerHTML =
+    tile("Críticas", fmtInt(porSev[3]), "exigen revisión inmediata", undefined, porSev[3] ? "crit" : "") +
+    tile("Altas", fmtInt(porSev[2]), "merecen abrir el expediente", undefined, porSev[2] ? "alta" : "") +
+    tile("Medias", fmtInt(porSev[1]), "señales de transparencia", undefined, porSev[1] ? "media" : "") +
+    tile("Registros revisados", fmtInt(todos.length + procesos.length), fmtInt(todos.length)+" contratos y "+fmtInt(procesos.length)+" procesos");
+
+  const conteo = {};
+  for (const b of banderas) for (const r of b.reglas) conteo[r.id] = (conteo[r.id]||0) + 1;
+  cont.innerHTML = REGLAS.filter(r => conteo[r.id]).sort((a,b) => b.sev - a.sev || conteo[b.id]-conteo[a.id]).map(r =>
+    '<div class="regla" data-regla="'+r.id+'" role="button" tabindex="0" style="cursor:pointer">'+
+    '<h4><span class="flag '+SEV[r.sev].clase+'">'+SEV[r.sev].nombre+"</span> "+esc(r.nombre)+
+    '<span class="n">'+fmtInt(conteo[r.id])+" registro"+(conteo[r.id]===1?"":"s")+"</span></h4>"+
+    '<div class="meta">'+esc(r.ambito === "contrato" ? "Contratos" : "Procesos")+" · "+esc(r.fuente)+"</div>"+
+    "<p>"+esc(r.que)+"</p><p style='color:var(--ink-muted)'>"+esc(r.porque)+"</p></div>").join("")
+    || '<div class="empty">Ninguna regla se activó con estos filtros.</div>';
+
+  const cb = $("#cBan");
+  cb.textContent = banderas.length;
+  cb.classList.toggle("hot", porSev[3] > 0);
+  pintarBanderas();
 }
 
 function pintarBanderas(){
@@ -1298,6 +1850,9 @@ document.addEventListener("click", e => {
   $("#banSev").value = "1";
   pintarBanderas();
   $("#banTabla").scrollIntoView({ behavior:"smooth", block:"start" });
+});
+document.addEventListener("keydown", e => {
+  if ((e.key === "Enter" || e.key === " ") && e.target.matches && e.target.matches(".regla[data-regla]")) { e.preventDefault(); e.target.click(); }
 });
 $("#banSev").addEventListener("change", pintarBanderas);
 $("#banTodas").addEventListener("click", () => { banFiltro = null; pintarBanderas(); });
@@ -1375,7 +1930,7 @@ async function cargarProcesos(){
   const cont = $("#procTabla");
   cont.innerHTML = '<div class="loading"><span class="spin"></span>Consultando SECOP…</div>';
   try {
-    const p = ["nit_entidad in(" + state.nits.map(n=>"'"+n+"'").join(",") + ")"];
+    const p = [nitsIn()];
     if (state.modalidad) p.push("modalidad_de_contratacion = '" + sq(state.modalidad) + "'");
     if (state.texto) { const t = sq(state.texto.toUpperCase());
       p.push("(upper(descripci_n_del_procedimiento) like '%"+t+"%' OR upper(referencia_del_proceso) like '%"+t+"%')"); }
@@ -1385,39 +1940,165 @@ async function cargarProcesos(){
     for (const r of rows) r.__flags = evaluarProceso(r);
     cacheProc = rows;
     cont.innerHTML = tablaProcesos(rows);
+    $("#vincRes").innerHTML = ""; $("#vincEstado").textContent = "";
   } catch(e){ errBox(cont, e); }
+}
+
+
+/* ============================================================
+   Vínculos entre proponentes (conjuntos hgi6-6wh3 y ceth-n4bn)
+   ------------------------------------------------------------
+   Para cada proceso con dos o más ofertas: quiénes se presentaron,
+   qué empresas hay detrás de cada consorcio, y si algún integrante
+   de un proponente ha estado en otro consorcio con algún integrante
+   de otro proponente. De paso busca si un proceso anterior de la
+   misma cuenta, con objeto casi igual, recibió muchas más ofertas.
+   Nace del caso BOG-1363-2025 (Tupeon e Infracon).
+   ============================================================ */
+const DS_PROPONENTES = "hgi6-6wh3";
+const MAX_VINC = 80;
+const normNit = n => { const d = String(n || "").replace(/\D/g, ""); return d.length === 10 && /^[89]/.test(d) ? d.slice(0, 9) : d; };
+const PALABRAS_VACIAS = new Set("de la las los el en y a al del para por con que se su sus o un una lo como fase seleccion presentacion ofertas proceso esap escuela superior administracion publica".split(" "));
+function fichas(t){
+  return new Set(String(t || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\(.*?\)/g, " ")
+    .split(/[^a-z0-9ñ]+/).filter(w => w.length > 2 && !PALABRAS_VACIAS.has(w)));
+}
+function parecido(a, b){
+  if (!a.size || !b.size) return 0;
+  let i = 0; for (const w of a) if (b.has(w)) i++;
+  return i / (a.size + b.size - i);
+}
+const lotesIn = (campo, vals, n = 60) => { const out = []; for (let i = 0; i < vals.length; i += n)
+  out.push(campo + " in(" + vals.slice(i, i + n).map(v => "'" + sq(v) + "'").join(",") + ")"); return out; };
+
+async function buscarVinculos(procs, avisar = () => {}){
+  const objetivo = procs.filter(p => p.id_del_proceso && (+p.respuestas_al_procedimiento || 0) >= 1).slice(0, MAX_VINC);
+  if (!objetivo.length) return { revisados: 0 };
+  const ids = [...new Set(objetivo.map(p => p.id_del_proceso))];
+  avisar("Consultando los proponentes de " + ids.length + " procesos…");
+  const props = (await Promise.all(lotesIn("id_procedimiento", ids, 40).map(w =>
+    soql(DS_PROPONENTES, { "$select":"id_procedimiento,proveedor,nit_proveedor,codigo_proveedor", "$where":w, "$limit":20000 })))).flat();
+  const porProc = new Map();
+  for (const r of props) { if (!porProc.has(r.id_procedimiento)) porProc.set(r.id_procedimiento, new Map()); porProc.get(r.id_procedimiento).set(r.codigo_proveedor || r.proveedor, r); }
+  // integrantes de los proponentes que son consorcios o uniones temporales
+  const codigos = [...new Set(props.map(r => r.codigo_proveedor).filter(Boolean))];
+  avisar("Abriendo los consorcios de " + codigos.length + " proponentes…");
+  const integ = (await Promise.all(lotesIn("codigo_grupo", codigos).map(w =>
+    soql(DS_GRUPOS, { "$select":"codigo_grupo,nombre_participante,nit_participante", "$where":w, "$limit":20000 })))).flat();
+  const miembros = new Map();          // codigo_proveedor -> Map(nit -> nombre)
+  for (const f of integ) { const m = miembros.get(f.codigo_grupo) || new Map(); m.set(normNit(f.nit_participante), f.nombre_participante); miembros.set(f.codigo_grupo, m); }
+  for (const r of props) if (!miembros.has(r.codigo_proveedor)) {
+    const n = normNit(r.nit_proveedor); if (n) miembros.set(r.codigo_proveedor || r.proveedor, new Map([[n, r.proveedor]]));
+  }
+  // todos los consorcios donde ha estado cada empresa
+  const nits = [...new Set([...miembros.values()].flatMap(m => [...m.keys()]))].filter(Boolean);
+  avisar("Revisando los consorcios de " + nits.length + " empresas en SECOP…");
+  const grupos = (await Promise.all(lotesIn("nit_participante", nits).map(w =>
+    soql(DS_GRUPOS, { "$select":"codigo_grupo,nombre_grupo,nit_participante,fecha_creaci_n_grupo", "$where":w, "$limit":50000 })))).flat();
+  const gruposDe = new Map();          // nit -> Set(codigo_grupo)
+  const infoGrupo = new Map();
+  for (const g of grupos) { const n = normNit(g.nit_participante);
+    if (!gruposDe.has(n)) gruposDe.set(n, new Set()); gruposDe.get(n).add(g.codigo_grupo);
+    infoGrupo.set(g.codigo_grupo, { nombre: g.nombre_grupo, creado: g.fecha_creaci_n_grupo }); }
+  // procesos anteriores con mucha competencia, para comparar
+  avisar("Buscando procesos anteriores con objeto parecido…");
+  const previos = await soql(DS_PROCESOS, { "$select":"id_del_proceso,referencia_del_proceso,nombre_del_procedimiento,descripci_n_del_procedimiento,respuestas_al_procedimiento,precio_base,fecha_de_publicacion_del,nit_entidad,modalidad_de_contratacion,urlproceso",
+    "$where": nitsIn(ENTIDADES.map(e => e.nit)) + " AND respuestas_al_procedimiento >= 8 AND fecha_de_publicacion_del >= '" + iso(masDias(hoy(), -365 * 6)) + "T00:00:00'", "$limit":5000 });
+  const prev = [...new Map(previos.filter(x => !/solicitud de informaci/i.test(x.modalidad_de_contratacion || "")).map(x => [x.id_del_proceso, x])).values()]
+    .map(x => ({ ...x, f: fichas((x.nombre_del_procedimiento || "") + " " + (x.descripci_n_del_procedimiento || "")) }));
+  let conVinc = 0, conMenos = 0;
+  for (const p of objetivo){
+    const lista = [...(porProc.get(p.id_del_proceso) || new Map()).values()];
+    const pares = [];
+    for (let i = 0; i < lista.length; i++) for (let j = i + 1; j < lista.length; j++){
+      const A = lista[i], B = lista[j];
+      const mA = miembros.get(A.codigo_proveedor || A.proveedor) || new Map(), mB = miembros.get(B.codigo_proveedor || B.proveedor) || new Map();
+      const propios = new Set([A.codigo_proveedor, B.codigo_proveedor]);
+      const gA = new Set(); for (const n of mA.keys()) for (const g of (gruposDe.get(n) || [])) if (!propios.has(g)) gA.add(g);
+      const comunes = new Set(); const quien = new Set();
+      for (const n of mB.keys()) for (const g of (gruposDe.get(n) || [])) if (gA.has(g) && !propios.has(g)) { comunes.add(g); quien.add(mB.get(n)); }
+      if (!comunes.size) continue;
+      for (const g of comunes) for (const n of mA.keys()) if ((gruposDe.get(n) || new Set()).has(g)) quien.add(mA.get(n));
+      const ej = [...comunes].map(g => ({ codigo: g, ...(infoGrupo.get(g) || {}) }))
+        .sort((x, y) => String(y.creado || "").localeCompare(String(x.creado || ""))).slice(0, 3);
+      pares.push({ a: A.proveedor, b: B.proveedor, n: comunes.size, quien: [...quien].filter(Boolean), ej });
+    }
+    let antes = null;
+    const res = +p.respuestas_al_procedimiento || 0, fp = fichas((p.nombre_del_procedimiento || p.referencia_del_proceso || "") + " " + (p.descripci_n_del_procedimiento || ""));
+    const base = +p.precio_base || 0;
+    for (const x of prev){
+      if (x.id_del_proceso === p.id_del_proceso || x.nit_entidad !== p.nit_entidad) continue;
+      if (String(x.fecha_de_publicacion_del) >= String(p.fecha_de_publicacion_del)) continue;
+      const bx = +x.precio_base || 0;
+      if (base > 0 && bx > 0 && (bx > base * 2 || bx < base / 2)) continue;
+      if (parecido(fp, x.f) < 0.5) continue;
+      const rx = +x.respuestas_al_procedimiento || 0;
+      if (rx >= 8 && res <= rx * 0.35 && (!antes || rx > antes.respuestas)) antes = { ref: refBase(x), respuestas: rx, fecha: x.fecha_de_publicacion_del, url: x.urlproceso?.url };
+    }
+    p.__vinc = { pares, antes, proponentes: lista.length };
+    if (pares.length) conVinc++;
+    if (antes) conMenos++;
+    p.__flags = evaluarProceso(p);
+  }
+  return { revisados: objetivo.length, conVinc, conMenos, recortado: procs.filter(p => (+p.respuestas_al_procedimiento || 0) >= 1).length > MAX_VINC };
+}
+
+function vinculosHTML(procs){
+  const hall = procs.filter(p => p.__vinc && (p.__vinc.pares.length || p.__vinc.antes));
+  if (!hall.length) return "";
+  let h = '<div class="hist"><h4>Lo que encontró la búsqueda de vínculos</h4>';
+  for (const p of hall){
+    h += '<div style="margin:10px 0 12px"><b class="mono">' + esc(refBase(p)) + "</b> · " + esc((p.descripci_n_del_procedimiento || "").slice(0, 110)) +
+         ' <span style="color:var(--ink-muted)">(' + (p.__vinc.proponentes || 0) + " proponentes)</span><ul style=\"margin:6px 0 0 18px\">";
+    for (const x of p.__vinc.pares)
+      h += "<li><b>" + esc(x.a) + "</b> y <b>" + esc(x.b) + "</b>: sus integrantes han estado juntos en " + x.n + (x.n === 1 ? " consorcio" : " consorcios") +
+           (x.quien.length ? " (" + esc(x.quien.slice(0, 4).join(", ")) + ")" : "") +
+           (x.ej.length ? '. Los más recientes: ' + x.ej.map(e => esc(e.nombre || e.codigo) + (e.creado ? " (" + fFecha(e.creado) + ")" : "")).join("; ") : "") + ".</li>";
+    if (p.__vinc.antes){ const a = p.__vinc.antes;
+      h += "<li>Un proceso anterior con objeto casi igual, " + (a.url ? '<a href="' + esc(a.url) + '" target="_blank" rel="noopener">' + esc(a.ref) + "</a>" : esc(a.ref)) +
+           " (" + fFecha(a.fecha) + "), recibió " + a.respuestas + " ofertas. Este recibió " + (+p.respuestas_al_procedimiento || 0) + ".</li>"; }
+    h += "</ul></div>";
+  }
+  return h + '<p class="sub" style="margin-top:6px">Un vínculo es un indicio, no una prueba. Revisa el informe de evaluación y las ofertas antes de sacar conclusiones.</p></div>';
 }
 
 /* ============================================================
    VENCIMIENTOS Y MODALIDADES
    ============================================================ */
 let venFiltro = "";
+let genVen = 0;
 async function cargarVencimientos(){
-  const cont = $("#senVenc");
+  const cont = $("#senVenc"), gen = ++genVen;
   cont.innerHTML = '<div class="loading"><span class="spin"></span>Consultando…</div>';
+  $("#venHist").innerHTML = "";
   try {
     const dias = +$("#venDias").value || 30;
-    const w = "nit_entidad in(" + state.nits.map(n=>"'"+n+"'").join(",") + ")"
+    const w = nitsIn()
       + " AND fecha_de_fin_del_contrato >= '" + iso(hoy()) + "T00:00:00'"
       + " AND fecha_de_fin_del_contrato <= '" + iso(masDias(hoy(), dias)) + "T23:59:59'";
     const rows = await soql(DS_CONTRATOS, { "$select":SEL_CONTRATO, "$where":w, "$order":"fecha_de_fin_del_contrato ASC", "$limit":600 });
-    const ctx = construirContexto(rows);
-    for (const r of rows) r.__flags = evaluarContrato(r, ctx);
+    if (gen !== genVen) return;
     cacheVenc = rows; indexar(rows);
-
-    // el desplegable solo ofrece señales que de verdad aparecen en esta ventana
-    const conteo = {};
-    for (const r of rows) for (const f of r.__flags) conteo[f.id] = (conteo[f.id]||0) + 1;
-    const limpios = rows.filter(r => !r.__flags.length).length;
-    const sel = $("#venSenal"), previo = venFiltro;
-    sel.innerHTML = '<option value="">Todas las señales (' + fmtInt(rows.length) + ")</option>" +
-      REGLAS.filter(r => conteo[r.id]).sort((a,b) => b.sev - a.sev || conteo[b.id]-conteo[a.id])
-        .map(r => '<option value="'+r.id+'">'+esc(SEV[r.sev].nombre)+" · "+esc(r.nombre)+" ("+fmtInt(conteo[r.id])+")</option>").join("") +
-      (limpios ? '<option value="__sin">Sin ninguna señal ('+fmtInt(limpios)+")</option>" : "");
-    sel.value = [...sel.options].some(o => o.value === previo) ? previo : "";
-    venFiltro = sel.value;
-    pintarVencimientos();
+    const ctx = construirContexto(rows);
+    const evaluar = () => { for (const r of rows) r.__flags = evaluarContrato(r, ctx); llenarSenales(); };
+    evaluar();
+    completarConHistorial(rows, $("#venHist"), gen, () => genVen, evaluar);
   } catch(e){ errBox(cont, e); }
+}
+
+// el desplegable solo ofrece señales que de verdad aparecen en esta ventana
+function llenarSenales(){
+  const rows = cacheVenc, conteo = {};
+  for (const r of rows) for (const f of r.__flags) conteo[f.id] = (conteo[f.id]||0) + 1;
+  const limpios = rows.filter(r => !r.__flags.length).length;
+  const sel = $("#venSenal"), previo = venFiltro;
+  sel.innerHTML = '<option value="">Todas las señales (' + fmtInt(rows.length) + ")</option>" +
+    REGLAS.filter(r => conteo[r.id]).sort((a,b) => b.sev - a.sev || conteo[b.id]-conteo[a.id])
+      .map(r => '<option value="'+r.id+'">'+esc(SEV[r.sev].nombre)+" · "+esc(r.nombre)+" ("+fmtInt(conteo[r.id])+")</option>").join("") +
+    (limpios ? '<option value="__sin">Sin ninguna señal ('+fmtInt(limpios)+")</option>" : "");
+  sel.value = [...sel.options].some(o => o.value === previo) ? previo : "";
+  venFiltro = sel.value;
+  pintarVencimientos();
 }
 
 function venFiltrados(){
@@ -1516,6 +2197,7 @@ function renderMetodologia(){
     ["No se ve quién está detrás de las empresas", "Detectar que dos oferentes comparten dueño requiere datos de beneficiarios finales que no están en SECOP. Esa verificación hay que hacerla a mano, en el registro mercantil."],
     ["No se leen los pliegos", "El objeto acomodado y los requisitos hechos a la medida solo se detectan leyendo los documentos del proceso. El monitor puede decirte a qué proceso mirar, no leerlo por ti."],
     ["Los datos son los que reportó la entidad", "Nada de esto está auditado. El monitor mide lo que la ESAP dijo que hizo. Cuando el propio dato es imposible, lo marca en lugar de corregirlo, porque el error de reporte también es información."],
+    ["Las reglas de prórrogas y adiciones dependen de un segundo conjunto", "Prórrogas encadenadas, prórroga al vencimiento y adición cerca del tope se calculan con el conjunto «Modificaciones a contratos» de SECOP II, que se consulta aparte y solo para los contratos que tienen días adicionados o figuran como modificados. Ese conjunto registra las fechas de terminación un día después de la que dice el documento firmado en muchos casos, y a veces no conserva la versión previa de una modificación; cuando falta, el plazo anterior se reconstruye restando los días adicionados. Antes de citar una fecha, se abre el documento firmado."],
     ["El periodo consultado cambia los resultados", "Las reglas de contexto (atípico, recurrente, fraccionamiento) se calculan sobre el rango de fechas que tengas puesto arriba. Si cambias el rango, cambian los promedios y por tanto cambia qué se marca."]
   ].map(([t,d]) => '<div class="regla"><h4>'+esc(t)+"</h4><p>"+esc(d)+"</p></div>").join("");
 }
@@ -1528,7 +2210,7 @@ function renderMetodologia(){
    al margen del rango de fechas de los filtros de arriba: lo que
    interesa aquí es la trayectoria completa del contratista.
    ============================================================ */
-const NITS_TODOS = () => "nit_entidad in(" + ENTIDADES.map(e=>"'"+e.nit+"'").join(",") + ")";
+const NITS_TODOS = () => nitsIn(ENTIDADES.map(e => e.nit));
 
 function nombreCtta(r){
   const n = esc(r.proveedor_adjudicado || "—");
@@ -1718,7 +2400,7 @@ $$("[data-ent]").forEach(b => b.addEventListener("click", () => {
 
 async function llenarSelects(){
   try {
-    const nitsAll = "nit_entidad in(" + ENTIDADES.map(e=>"'"+e.nit+"'").join(",") + ")";
+    const nitsAll = NITS_TODOS();
     const [mods, tipos] = await Promise.all([
       soql(DS_CONTRATOS, { "$select":"modalidad_de_contratacion, count(1) as n", "$where":nitsAll, "$group":"modalidad_de_contratacion", "$order":"n DESC", "$limit":60 }),
       soql(DS_CONTRATOS, { "$select":"tipo_de_contrato, count(1) as n", "$where":nitsAll, "$group":"tipo_de_contrato", "$order":"n DESC", "$limit":60 })
@@ -1785,6 +2467,7 @@ function irA(tab){
 $$("nav.tabs button").forEach(b => b.addEventListener("click", () => irA(b.dataset.tab)));
 
 $("#applyBtn").addEventListener("click", () => {
+  memoria.clear(); histCache.clear();
   leerFiltros(); sincronizarURL();
   cargadas.clear(); cargadas.add(tabActual); cargadas.add("metodologia");
   renderMetodologia();
@@ -1827,6 +2510,20 @@ $("#csvBan").addEventListener("click", () => {
     {t:"Objeto", f:b => b.item.objeto_del_contrato || b.item.descripci_n_del_procedimiento || ""},
     {t:"Expediente SECOP", f:b => b.item.urlproceso?.url || ""}
   ]));
+});
+$("#btnVinc").addEventListener("click", async () => {
+  const b = $("#btnVinc"), est = $("#vincEstado");
+  if (!cacheProc.length) { est.textContent = "Primero carga los procesos."; return; }
+  b.disabled = true;
+  try {
+    const r = await buscarVinculos(cacheProc, t => { est.textContent = t; });
+    est.textContent = !r.revisados ? "No hay procesos con ofertas para revisar en este filtro."
+      : "Se revisaron " + r.revisados + " procesos. " + r.conVinc + " tienen competidores que han sido socios y " + r.conMenos + " recibieron muchas menos ofertas que un proceso anterior parecido." +
+        (r.recortado ? " Solo se revisan los " + MAX_VINC + " más recientes; acota el filtro para revisar otros." : "");
+    $("#procTabla").innerHTML = tablaProcesos(cacheProc);
+    $("#vincRes").innerHTML = vinculosHTML(cacheProc);
+  } catch(e){ errBox(est, e); }
+  finally { b.disabled = false; }
 });
 $("#csvProc").addEventListener("click", () => downloadCSV("procesos-esap.csv", toCSV(cacheProc, [
   {t:"Entidad",f:r=>NIT2NOM[r.nit_entidad]||r.entidad},{t:"Referencia",f:r=>refBase(r)},{t:"Fase",f:"fase"},
@@ -1884,6 +2581,7 @@ $("#themeBtn").addEventListener("click", () => {
   renderSeguimiento();
   renderMetodologia(); cargadas.add("metodologia");
   cargarNovedades();
+  verificarFuente();
   if (tab !== "novedades") irA(tab); else sincronizarURL();
 })();
 
