@@ -1756,19 +1756,26 @@ $("#csvNvm").addEventListener("click", () => downloadCSV("nuevos-por-monto-esap.
    BANDERAS ROJAS
    ============================================================ */
 let genBan = 0, datosBan = null;
+const TOPE_BAN = 3000;
 async function cargarBanderas(){
   const cont = $("#banReglas"), gen = ++genBan;
   cont.innerHTML = '<div class="loading"><span class="spin"></span>Evaluando reglas…</div>';
   $("#banHist").innerHTML = "";
   try {
-    const [contratos, huerfanos, procesos] = await Promise.all([
-      soql(DS_CONTRATOS, { "$select":SEL_CONTRATO, "$where":whereContratos(), "$order":"fecha_de_firma DESC", "$limit":3000 }),
+    const [recientes, obras, huerfanos, procesos] = await Promise.all([
+      soql(DS_CONTRATOS, { "$select":SEL_CONTRATO, "$where":whereContratos(), "$order":"fecha_de_firma DESC", "$limit":TOPE_BAN }),
+      /* Las obras, interventorías y consultorías son pocas y son donde corren «solo anticipo» y «sin
+         liquidar»; se piden aparte para que el tope de los más recientes no las deje por fuera. */
+      soql(DS_CONTRATOS, { "$select":SEL_CONTRATO, "$where":whereContratos("tipo_de_contrato in('Obra','Interventoría','Consultoría')"),
+                           "$order":"fecha_de_firma DESC", "$limit":1000 }),
       soql(DS_CONTRATOS, { "$select":SEL_CONTRATO, "$where":nitsIn() + " AND fecha_de_firma IS NULL", "$limit":400 }),
       soql(DS_PROCESOS,  { "$select":SEL_PROCESO, "$where":nitsIn() + (state.desde ? " AND fecha_de_publicacion_del >= '"+state.desde+"T00:00:00'" : ""),
                            "$order":"fecha_de_publicacion_del DESC", "$limit":1500 })
     ]);
     if (gen !== genBan) return;
-    datosBan = { todos: contratos.concat(huerfanos), procesos, ctx: construirContexto(contratos) };
+    const vistos = new Set(recientes.map(c => c.id_contrato || c.referencia_del_contrato));
+    const contratos = recientes.concat(obras.filter(c => !vistos.has(c.id_contrato || c.referencia_del_contrato)));
+    datosBan = { todos: contratos.concat(huerfanos), procesos, ctx: construirContexto(contratos), recortado: recientes.length >= TOPE_BAN };
     for (const p of procesos) p.__flags = evaluarProceso(p);
     indexar(datosBan.todos);
     evaluarBanderas();
@@ -1792,7 +1799,8 @@ function evaluarBanderas(){
     tile("Críticas", fmtInt(porSev[3]), "exigen revisión inmediata", undefined, porSev[3] ? "crit" : "") +
     tile("Altas", fmtInt(porSev[2]), "merecen abrir el expediente", undefined, porSev[2] ? "alta" : "") +
     tile("Medias", fmtInt(porSev[1]), "señales de transparencia", undefined, porSev[1] ? "media" : "") +
-    tile("Registros revisados", fmtInt(todos.length + procesos.length), fmtInt(todos.length)+" contratos y "+fmtInt(procesos.length)+" procesos");
+    tile("Registros revisados", fmtInt(todos.length + procesos.length), fmtInt(todos.length)+" contratos y "+fmtInt(procesos.length)+" procesos" +
+      (datosBan.recortado ? " · de los contratos, los "+fmtInt(TOPE_BAN)+" más recientes del rango más todas las obras, interventorías y consultorías" : ""));
 
   const conteo = {};
   for (const b of banderas) for (const r of b.reglas) conteo[r.id] = (conteo[r.id]||0) + 1;
